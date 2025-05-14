@@ -1,0 +1,21 @@
+# OS-specific
+.DS_Store
+
+# Python
+__pycache__/
+
+# Misc
+*.log
+
+# Dev
+dev/
+
+# VSCode
+.vscode/
+
+# Python packaging
+dist/
+build/
+
+# PyPI
+.pypirc
