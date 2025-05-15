@@ -71,18 +71,27 @@ Axiom ¬-:
 Usage: ¬- <index1> <index2> <formula>
     <index1> — 1-based index of an existing hypothesis: Σ, ¬A ⊢ B
     <index2> — 1-based index of an existing hypothesis: Σ, ¬A ⊢ ¬B
-    <formula> — a formula: A
+    [formula] — a formula: A (optional; if not provided, DeDuck will infer A as the only formula such that ¬A appears in the premises of both selected hypotheses)
 Effect: Adds Σ ⊢ A as a new hypothesis.
 """)
 def r_not_elim(state, *params):
-    if len(params) != 3:
+    if len(params) not in (2, 3):
         raise ValueError(r_not_elim.usage)
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
-    formula = Parser(params[2]).parse_formula_only()
     s1 = state.hyp(index1)
     s2 = state.hyp(index2)
-    # Check both hypotheses have ¬A in their premises
+    if len(params) == 3:
+        formula = Parser(params[2]).parse_formula_only()
+    else:
+        # Try to infer A: the only formula such that Not(A) is in both premises
+        nots1 = {p for p in s1.premises if isinstance(p, Not)}
+        nots2 = {p for p in s2.premises if isinstance(p, Not)}
+        common_nots = nots1 & nots2
+        if len(common_nots) != 1:
+            raise ValueError("Cannot infer formula: there must be exactly one common ¬ formula in the premises.")
+        not_formula = next(iter(common_nots))
+        formula = not_formula.formula
     not_formula = Not(formula)
     if not_formula not in s1.premises:
         raise ValueError(f"Cannot find ¬{formula} in {s1}")
@@ -129,15 +138,21 @@ Axiom →+:
     If Σ, A ⊢ B, then Σ ⊢ A → B
 Usage: →+ <index> <formula>
     <index> — 1-based index of an existing hypothesis: Σ, A ⊢ B
-    <formula> — a formula: A
+    [formula] — a formula: A (optional; if not provided, DeDuck will infer A as the only formula in the selected hypothesis)
 Effect: Adds Σ ⊢ A → B as a new hypothesis.
 """)
 def r_implies_intro(state, *params):
-    if len(params) != 2:
+    if len(params) not in (1, 2):
         raise ValueError(r_implies_intro.usage)
     index = state.process_index_param(params[0])
-    formula = Parser(params[1]).parse_formula_only()
     s1 = state.hyp(index)
+    if len(params) == 2:
+        formula = Parser(params[1]).parse_formula_only()
+    else:
+        # Infer A as the only formula in the premises
+        if len(s1.premises) != 1:
+            raise ValueError("Cannot infer formula: there must be exactly one formula in the premises.")
+        formula = next(iter(s1.premises))
     if formula not in s1.premises:
         raise ValueError(f"The formula {formula} must appear in the premises of the hypothesis.")    
     new_premises = s1.premises - {formula}
