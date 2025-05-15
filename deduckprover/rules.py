@@ -11,7 +11,7 @@ Effect: Discharges the goal if its conclusion exactly matches the selected hypot
 def r_exact(state, *params):
     """Discharge goal if conclusion is exactly one of the hypotheses."""
     if len(params) > 1:
-        raise ValueError(r_exact.usage)
+        raise ValueError()
     if len(params) == 0:
         s = state.last_hyp()
     else:
@@ -30,7 +30,7 @@ Effect: Removes the selected hypothesis from the current goal.
 def r_remove(state, *params):
     """Remove a hypothesis from the current goal."""
     if len(params) != 1:
-        raise ValueError(r_remove.usage)
+        raise ValueError()
     index = state.process_index_param(params[0])
     state.remove_hyp(index)
 
@@ -43,7 +43,7 @@ Effect: Adds A ⊢ A as a new hypothesis.
 """)
 def r_ref(state, *params):
     if len(params) != 1:
-        raise ValueError(r_ref.usage)
+        raise ValueError()
     formula = Parser(params[0]).parse_formula_only()
     new_hyp = Sequent([formula], formula)
     state.add_hyp(new_hyp)
@@ -58,7 +58,7 @@ Effect: Adds Σ, Σ' ⊢ A as a new hypothesis.
 """)
 def r_add(state, *params):
     if len(params) != 2:
-        raise ValueError(r_add.usage)
+        raise ValueError()
     index = state.process_index_param(params[0])
     formulas = Parser(params[1]).parse_formulas_only()
     selected = state.hyp(index)
@@ -76,7 +76,7 @@ Effect: Adds Σ ⊢ A as a new hypothesis.
 """)
 def r_not_elim(state, *params):
     if len(params) not in (2, 3):
-        raise ValueError(r_not_elim.usage)
+        raise ValueError()
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
     s1 = state.hyp(index1)
@@ -118,13 +118,13 @@ Effect: Adds Σ ⊢ B as a new hypothesis.
 """)
 def r_implies_elim(state, *params):
     if len(params) != 2:
-        raise ValueError(r_implies_elim.usage)
+        raise ValueError()
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
     s1 = state.hyp(index1)
     s2 = state.hyp(index2)
     if s1.premises != s2.premises:
-        raise ValueError("hypotheses must share the same set of premises.")
+        raise ValueError("Hypotheses must share the same set of premises.")
     if not isinstance(s1.conclusion, Implies):
         raise ValueError("First hypothesis must conclude A → B.")
     if s1.conclusion.left != s2.conclusion:
@@ -143,7 +143,7 @@ Effect: Adds Σ ⊢ A → B as a new hypothesis.
 """)
 def r_implies_intro(state, *params):
     if len(params) not in (1, 2):
-        raise ValueError(r_implies_intro.usage)
+        raise ValueError()
     index = state.process_index_param(params[0])
     s1 = state.hyp(index)
     if len(params) == 2:
@@ -169,7 +169,7 @@ Effect: Adds Σ ⊢ A and Σ ⊢ B as new hypotheses.
 """)
 def r_and_elim(state, *params):
     if len(params) != 1:
-        raise ValueError(r_and_elim.usage)
+        raise ValueError()
     index = state.process_index_param(params[0])
     selected = state.hyp(index)
     if not isinstance(selected.conclusion, And):
@@ -194,7 +194,7 @@ Effect: Adds Σ ⊢ A ∧ B as a new hypothesis.
 """)
 def r_and_intro(state, *params):
     if len(params) != 2:
-        raise ValueError(r_and_intro.usage)
+        raise ValueError()
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
     s1 = state.hyp(index1)
@@ -216,7 +216,7 @@ Effect: Adds Σ, A ∨ B ⊢ C as a new hypothesis.
 """)
 def r_or_elim(state, *params):
     if len(params) != 4:
-        raise ValueError(r_or_elim.usage)
+        raise ValueError()
     # Parse indices
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
@@ -254,7 +254,7 @@ Effect: Adds Σ ⊢ A ∨ B and Σ ⊢ B ∨ A as new hypotheses.
 """)
 def r_or_intro(state, *params):
     if len(params) != 2:
-        raise ValueError(r_or_intro.usage)
+        raise ValueError()
     index = state.process_index_param(params[0])
     formula = Parser(params[1]).parse_formula_only()
     selected = state.hyp(index)
@@ -278,7 +278,7 @@ Effect: Adds Σ ⊢ B as a new hypothesis.
 """)
 def r_iff_elim_l(state, *params):
     if len(params) != 2:
-        raise ValueError(r_iff_elim_l.usage)
+        raise ValueError()
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
     s1 = state.hyp(index1)
@@ -303,7 +303,7 @@ Effect: Adds Σ ⊢ A as a new hypothesis.
 """)
 def r_iff_elim_r(state, *params):
     if len(params) != 2:
-        raise ValueError(r_iff_elim_r.usage)
+        raise ValueError()
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
     s1 = state.hyp(index1)
@@ -328,7 +328,7 @@ Effect: Adds Σ ⊢ A ↔ B as a new hypothesis.
 """)
 def r_iff_intro(state, *params):
     if len(params) != 2:
-        raise ValueError(r_iff_intro.usage)
+        raise ValueError()
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
     s1 = state.hyp(index1)
@@ -360,7 +360,7 @@ Effect: Adds Σ ⊢ A(t) as a new hypothesis.
 """)
 def r_forall_elim(state, *params):
     if len(params) != 2:
-        raise ValueError(r_forall_elim.usage)
+        raise ValueError()
     index = state.process_index_param(params[0])
     term = Parser(params[1]).parse_term_only()
     s = state.hyp(index)
@@ -385,7 +385,7 @@ Effect: Adds Σ ⊢ ∀x A(x) as a new hypothesis.
 """)
 def r_forall_intro(state, *params):
     if len(params) != 3:
-        raise ValueError(r_forall_intro.usage)
+        raise ValueError()
     index = state.process_index_param(params[0])
     fv_name = params[1].strip(' `') # u
     v_name = params[2].strip() # x
@@ -418,7 +418,7 @@ Effect: Adds Σ, ∃x A(x) ⊢ B as a new hypothesis.
 """)
 def r_exists_elim(state, *params):
     if len(params) != 4:
-        raise ValueError(r_exists_elim.usage)
+        raise ValueError()
     index = state.process_index_param(params[0])
     formula = Parser(params[1]).parse_formula_only() # A(`u)
     fv_name = params[2].strip(' `') # `u
@@ -458,7 +458,7 @@ Effect: Adds Σ ⊢ ∃x A(x) as a new hypothesis.
 """)
 def r_exists_intro(state, *params):
     if len(params) != 3:
-        raise ValueError(r_exists_intro.usage)
+        raise ValueError()
     index = state.process_index_param(params[0])
     term = Parser(params[1]).parse_term_only()
     formula = Parser(params[2]).parse_formula_only()
@@ -487,7 +487,7 @@ Effect: Adds Σ ⊢ A(t2) as a new hypothesis.
 """)
 def r_eq_elim(state, *params):
     if len(params) != 4:
-        raise ValueError(r_eq_elim.usage)
+        raise ValueError()
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
     formula = Parser(params[2]).parse_formula_only()
@@ -521,7 +521,7 @@ Effect: Adds ⊢ `u ≈ `u as a new hypothesis.
 """)
 def r_eq_intro(state, *params):
     if len(params) != 1:
-        raise ValueError(r_eq_intro.usage)
+        raise ValueError()
     fv_name = params[0].strip(' `')
     # Check fv_name is an identifier
     if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', fv_name) is None:
@@ -541,7 +541,7 @@ Effect: Adds ⊢ ∀x(¬(s(x) ≈ 0)) as a new hypothesis.
 """)
 def r_PA1(state, *params):
     if len(params) != 0:
-        raise ValueError(r_PA1.usage)
+        raise ValueError()
     formula = ForAll('x', Not(Atom("≈", [Func('s', [Var('x')]), Const('0')])))
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
@@ -554,7 +554,7 @@ Effect: Adds ⊢ ∀x∀y(s(x) ≈ s(y) → x ≈ y) as a new hypothesis.
 """)
 def r_PA2(state, *params):
     if len(params) != 0:
-        raise ValueError(r_PA2.usage)
+        raise ValueError()
     formula = ForAll('x', ForAll('y', Implies(Atom("≈", [Func('s', [Var('x')]), Func('s', [Var('y')])]), Atom("≈", [Var('x'), Var('y')]))))
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
@@ -567,7 +567,7 @@ Effect: Adds ⊢ ∀x(x + 0 ≈ x) as a new hypothesis.
 """)
 def r_PA3(state, *params):
     if len(params) != 0:
-        raise ValueError(r_PA3.usage)
+        raise ValueError()
     formula = ForAll('x', Atom("≈", [Func('+', [Var('x'), Const('0')]), Var('x')]))
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
@@ -580,7 +580,7 @@ Effect: Adds ⊢ ∀x∀y(x + s(y) ≈ s(x + y)) as a new hypothesis.
 """)
 def r_PA4(state, *params):
     if len(params) != 0:
-        raise ValueError(r_PA4.usage)
+        raise ValueError()
     formula = ForAll('x', ForAll('y', Atom("≈", [Func('+', [Var('x'), Func('s', [Var('y')])]), Func('s', [Func('+', [Var('x'), Var('y')])])])))
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
@@ -593,7 +593,7 @@ Effect: Adds ⊢ ∀x(x ⋅ 0 ≈ 0) as a new hypothesis.
 """)
 def r_PA5(state, *params):
     if len(params) != 0:
-        raise ValueError(r_PA5.usage)
+        raise ValueError()
     formula = ForAll('x', Atom("≈", [Func('⋅', [Var('x'), Const('0')]), Const('0')]))
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
@@ -606,7 +606,7 @@ Effect: Adds ⊢ ∀x∀y(x ⋅ s(y) ≈ x ⋅ y + x) as a new hypothesis.
 """)
 def r_PA6(state, *params):
     if len(params) != 0:
-        raise ValueError(r_PA6.usage)
+        raise ValueError()
     formula = ForAll('x', ForAll('y', Atom("≈", [Func('⋅', [Var('x'), Func('s', [Var('y')])]), Func('+', [Func('⋅', [Var('x'), Var('y')]), Var('x')])])))
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
@@ -620,7 +620,7 @@ Effect: Adds ⊢ A(0) ∧ ∀x(A(x) → A(s(x))) → ∀x A(x) as a new hypothes
 """)
 def r_PA7(state, *params):
     if len(params) != 1:
-        raise ValueError(r_PA7.usage)
+        raise ValueError()
     formula = Parser(params[0]).parse_formula_only()
     if not isinstance(formula, ForAll):
         raise ValueError(f"Formula {formula} is not a ∀-quantified formula.")
@@ -642,7 +642,7 @@ Effect: Adds Σ ⊢ A as a new hypothesis.
 """)
 def r_in(state, *params):
     if len(params) != 2:
-        raise ValueError(r_in.usage)
+        raise ValueError()
     formulas = Parser(params[0]).parse_formulas_only()
     index = int(params[1])
     if index < 1 or index > len(formulas):
@@ -664,7 +664,7 @@ Effect: Adds Σ ⊢ ¬A as a new hypothesis.
 """)
 def r_not_intro(state, *params):
     if len(params) != 3:
-        raise ValueError(r_not_intro.usage)
+        raise ValueError()
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
     s1 = state.hyp(index1)
@@ -694,7 +694,7 @@ Effect: Adds A, ¬A ⊢ B as a new hypothesis (ex falso quodlibet).
 """)
 def r_inconsistency(state, *params):
     if len(params) != 2:
-        raise ValueError(r_inconsistency.usage)
+        raise ValueError()
     formula1 = Parser(params[0]).parse_formula_only()
     formula2 = Parser(params[1]).parse_formula_only()
     new_sequent = Sequent([formula1, Not(formula1)], formula2)
@@ -709,7 +709,7 @@ Effect: Adds ¬B ⊢ ¬A as a new hypothesis.
 """)
 def r_flipflop(state, *params):
     if len(params) != 1:
-        raise ValueError(r_flipflop.usage)
+        raise ValueError()
     index = state.process_index_param(params[0])
     s = state.hyp(index)
     if len(s.premises) != 1:
@@ -728,7 +728,7 @@ Effect: Adds ⊢ t ≈ t as a new hypothesis (reflexivity of equality).
 """)
 def r_eq_refl(state, *params):
     if len(params) != 1:
-        raise ValueError(r_eq_refl.usage)
+        raise ValueError()
     term = Parser(params[0]).parse_term_only()
     formula = Atom("≈", [term, term])
     new_sequent = Sequent([], formula)
@@ -744,7 +744,7 @@ Effect: Adds t1 ≈ t2 ⊢ t2 ≈ t1 as a new hypothesis (symmetry of equality).
 """)
 def r_eq_symm(state, *params):
     if len(params) != 2:
-        raise ValueError(r_eq_symm.usage)
+        raise ValueError()
     term1 = Parser(params[0]).parse_term_only()
     term2 = Parser(params[1]).parse_term_only()
     premise = Atom("≈", [term1, term2])
@@ -763,7 +763,7 @@ Effect: Adds t1 ≈ t2, t2 ≈ t3 ⊢ t1 ≈ t3 as a new hypothesis (transitivit
 """)
 def r_eq_trans(state, *params):
     if len(params) != 3:
-        raise ValueError(r_eq_trans.usage)
+        raise ValueError()
     term1 = Parser(params[0]).parse_term_only()
     term2 = Parser(params[1]).parse_term_only()
     term3 = Parser(params[2]).parse_term_only()

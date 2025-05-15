@@ -4,6 +4,7 @@ import shlex
 
 from .parser import Parser
 from .verifier import ProofState
+from .verifier import dict_rules
 
 class ProofScriptFailure(ValueError):
     """
@@ -91,5 +92,7 @@ def run_script(script):
             if state.is_closed():
                 line_closed = lineNum
         except (ValueError, UnexpectedInput) as e:
-            raise ProofScriptFailure(lineNum, line_checked, str(state), f"{e}")
+            fn = dict_rules.get(name)
+            usage = getattr(fn, 'usage', None)
+            raise ProofScriptFailure(lineNum, line_checked, str(state), f"{e}\n{usage}")
     return str(state)
