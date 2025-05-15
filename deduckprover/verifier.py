@@ -3,10 +3,22 @@ from .syntax import pretty_formulas
 # Rule decorator and registry
 dict_rules = {}
 
-def rule(name):
-    """Decorator to register a proof rule"""
+def rule(name, usage=None):
+    """Decorator to register a proof rule with optional usage/help text. Supports multiple names (aliases)."""
+    # Type check for name
+    if not (isinstance(name, str) or isinstance(name, (list, tuple))):
+        raise InternalError("Rule name must be a string or a list/tuple of strings.")
+    if isinstance(name, (list, tuple)):
+        for n in name:
+            if not isinstance(n, str):
+                raise InternalError("All rule names in the list/tuple must be strings.")
     def decorator(fn):
-        dict_rules[name] = fn
+        fn.rule_name = name
+        fn.usage = usage
+        # Support multiple names (aliases)
+        names = name if isinstance(name, (list, tuple)) else [name]
+        for n in names:
+            dict_rules[n] = fn
         return fn
     return decorator
 

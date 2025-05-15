@@ -3,14 +3,15 @@ from .syntax import *
 from .parser import Parser
 from .verifier import rule
 
-@rule('exact')
+@rule('exact', usage="""
+Usage: exact [index]
+    [index] — 1-based index of an existing hypothesis (optional; defaults to last hypothesis)
+Effect: Discharges the goal if its conclusion exactly matches the selected hypothesis.
+""")
 def r_exact(state, *params):
     """Discharge goal if conclusion is exactly one of the hypotheses."""
     if len(params) > 1:
-        err_msg = "Usage: exact [index]\n"
-        err_msg += "\t[index] is a 1-based index of an existing hypothesis\n"
-        err_msg += "\tIf omitted, [index] defaults to the last hypothesis."
-        raise ValueError(err_msg)
+        raise ValueError(r_exact.usage)
     if len(params) == 0:
         s = state.last_hyp()
     else:
@@ -21,50 +22,61 @@ def r_exact(state, *params):
     else:
         raise ValueError("Exact rule failed: not an exact match.")
 
-@rule('rm')
+@rule('rm', usage="""
+Usage: rm <index>
+    <index> — 1-based index of an existing hypothesis
+Effect: Removes the selected hypothesis from the current goal.
+""")
 def r_remove(state, *params):
     """Remove a hypothesis from the current goal."""
     if len(params) != 1:
-        raise ValueError("Usage: rm <index>")
+        raise ValueError(r_remove.usage)
     index = state.process_index_param(params[0])
     state.remove_hyp(index)
 
-@rule('Ref')
-@rule('ref')
+@rule(['Ref', 'ref'], usage="""
+Axiom Ref:
+    A ⊢ A
+Usage: Ref <formula>
+    <formula> — a formula: A
+Effect: Adds A ⊢ A as a new hypothesis.
+""")
 def r_ref(state, *params):
     if len(params) != 1:
-        err_msg = "Rule Ref:\n\t A ⊢ A\n"
-        err_msg += "Usage: Ref <formula>\n"
-        err_msg += "\t<formula> is a formula: A"
-        raise ValueError(err_msg)
+        raise ValueError(r_ref.usage)
     formula = Parser(params[0]).parse_formula_only()
     new_hyp = Sequent([formula], formula)
     state.add_hyp(new_hyp)
 
-@rule('+')
+@rule('+', usage="""
+Axiom +:
+    If Σ ⊢ A, then Σ, Σ' ⊢ A
+Usage: + <index> <formulas>
+    <index> — 1-based index of an existing hypothesis: Σ ⊢ A
+    <formulas> — comma-separated list of formulas: Σ'
+Effect: Adds Σ, Σ' ⊢ A as a new hypothesis.
+""")
 def r_add(state, *params):
     if len(params) != 2:
-        err_msg = "Rule +:\n\tIf Σ ⊢ A, then Σ, Σ' ⊢ A\n"
-        err_msg += "Usage: + <index> <formulas>\n"
-        err_msg += "\t<index> is a 1-based index of an existing hypothesis: Σ ⊢ A\n"
-        err_msg += "\t<formulas> is a comma-separated list of formulas: Σ'"
-        raise ValueError(err_msg)
+        raise ValueError(r_add.usage)
     index = state.process_index_param(params[0])
     formulas = Parser(params[1]).parse_formulas_only()
     selected = state.hyp(index)
     new_hyp = Sequent(list(selected.premises) + formulas, selected.conclusion)
     state.add_hyp(new_hyp)
 
-@rule('not-')
-@rule('¬-')
+@rule(['not-', '¬-'], usage="""
+Axiom ¬-:
+    If Σ, ¬A ⊢ B and Σ, ¬A ⊢ ¬B, then Σ ⊢ A
+Usage: ¬- <index1> <index2> <formula>
+    <index1> — 1-based index of an existing hypothesis: Σ, ¬A ⊢ B
+    <index2> — 1-based index of an existing hypothesis: Σ, ¬A ⊢ ¬B
+    <formula> — a formula: A
+Effect: Adds Σ ⊢ A as a new hypothesis.
+""")
 def r_not_elim(state, *params):
     if len(params) != 3:
-        err_msg = "Rule ¬-:\n\tIf Σ, ¬A ⊢ B and Σ, ¬A ⊢ ¬B, then Σ ⊢ A\n"
-        err_msg += "Usage: ¬- <index1> <index2> <formula>\n"
-        err_msg += "\t<index1> is a 1-based index of an existing hypothesis: Σ, ¬A ⊢ B\n"
-        err_msg += "\t<index2> is a 1-based index of an existing hypothesis: Σ, ¬A ⊢ ¬B\n"
-        err_msg += "\t<formula> is a formula (A)"
-        raise ValueError(err_msg)
+        raise ValueError(r_not_elim.usage)
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
     formula = Parser(params[2]).parse_formula_only()
@@ -87,16 +99,17 @@ def r_not_elim(state, *params):
     new_hyp = Sequent(list(s1.premises - {not_formula}), formula)
     state.add_hyp(new_hyp)
 
-@rule('imp-')
-@rule('→-')
+@rule(['imp-', '→-'], usage="""
+Axiom →-:
+    If Σ ⊢ A → B and Σ ⊢ A, then Σ ⊢ B
+Usage: →- <index1> <index2>
+    <index1> — 1-based index of an existing hypothesis: Σ ⊢ A → B
+    <index2> — 1-based index of an existing hypothesis: Σ ⊢ A
+Effect: Adds Σ ⊢ B as a new hypothesis.
+""")
 def r_implies_elim(state, *params):
     if len(params) != 2:
-        err_msg = "Rule →-:\n\tIf Σ ⊢ A → B and Σ ⊢ A, then Σ ⊢ B\n"
-        err_msg += "Usage: →- <index1> <index2>\n"
-        err_msg += "\t<index1> is a 1-based index of an existing hypothesis: Σ ⊢ A → B\n"
-        err_msg += "\t<index2> is a 1-based index of an existing hypothesis: Σ ⊢ A"
-        raise ValueError(err_msg)
-    
+        raise ValueError(r_implies_elim.usage)
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
     s1 = state.hyp(index1)
@@ -111,15 +124,17 @@ def r_implies_elim(state, *params):
     new_hyp = Sequent(list(s1.premises), s1.conclusion.right)
     state.add_hyp(new_hyp)
 
-@rule('imp+')
-@rule('→+')
+@rule(['imp+', '→+'], usage="""
+Axiom →+:
+    If Σ, A ⊢ B, then Σ ⊢ A → B
+Usage: →+ <index> <formula>
+    <index> — 1-based index of an existing hypothesis: Σ, A ⊢ B
+    <formula> — a formula: A
+Effect: Adds Σ ⊢ A → B as a new hypothesis.
+""")
 def r_implies_intro(state, *params):
     if len(params) != 2:
-        err_msg = "Rule →+:\n\tIf Σ, A ⊢ B, then Σ ⊢ A → B\n"
-        err_msg += "Usage: →+ <index> <formula>\n"
-        err_msg += "\t<index> is a 1-based index of an existing hypothesis: Σ, A ⊢ B\n"
-        err_msg += "\t<formula> is a formula: A"
-        raise ValueError(err_msg)
+        raise ValueError(r_implies_intro.usage)
     index = state.process_index_param(params[0])
     formula = Parser(params[1]).parse_formula_only()
     s1 = state.hyp(index)
@@ -130,15 +145,16 @@ def r_implies_intro(state, *params):
     new_hyp = Sequent(list(new_premises), new_conclusion)
     state.add_hyp(new_hyp)
 
-@rule('and-')
-@rule('∧-')
+@rule(['and-', '∧-'], usage="""
+Axiom ∧-:
+    If Σ ⊢ A ∧ B, then Σ ⊢ A and Σ ⊢ B
+Usage: ∧- <index>
+    <index> — 1-based index of an existing hypothesis: Σ ⊢ A ∧ B
+Effect: Adds Σ ⊢ A and Σ ⊢ B as new hypotheses.
+""")
 def r_and_elim(state, *params):
     if len(params) != 1:
-        err_msg = "Rule ∧-:\n\tIf Σ ⊢ A ∧ B, then Σ ⊢ A and Σ ⊢ B\n"
-        err_msg += "Usage: ∧- <index>\n"
-        err_msg += "\t<index> is a 1-based index of an existing hypothesis: Σ ⊢ A ∧ B"
-        raise ValueError(err_msg)
-    
+        raise ValueError(r_and_elim.usage)
     index = state.process_index_param(params[0])
     selected = state.hyp(index)
     if not isinstance(selected.conclusion, And):
@@ -153,15 +169,17 @@ def r_and_elim(state, *params):
     state.add_hyp(new_left)
     state.add_hyp(new_right)
 
-@rule('and+')
-@rule('∧+')
+@rule(['and+', '∧+'], usage="""
+Axiom ∧+:
+    If Σ ⊢ A and Σ ⊢ B, then Σ ⊢ A ∧ B
+Usage: ∧+ <index1> <index2>
+    <index1> — 1-based index of an existing hypothesis: Σ ⊢ A
+    <index2> — 1-based index of an existing hypothesis: Σ ⊢ B
+Effect: Adds Σ ⊢ A ∧ B as a new hypothesis.
+""")
 def r_and_intro(state, *params):
     if len(params) != 2:
-        err_msg = "Rule ∧+:\n\tIf Σ ⊢ A and Σ ⊢ B, then Σ ⊢ A ∧ B\n"
-        err_msg += "Usage: ∧+ <index1> <index2>\n"
-        err_msg += "\t<index1> is a 1-based index of an existing hypothesis: Σ ⊢ A\n"
-        err_msg += "\t<index2> is a 1-based index of an existing hypothesis: Σ ⊢ B"
-        raise ValueError(err_msg)
+        raise ValueError(r_and_intro.usage)
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
     s1 = state.hyp(index1)
@@ -171,17 +189,19 @@ def r_and_intro(state, *params):
     new_hyp = Sequent(list(s1.premises), And(s1.conclusion, s2.conclusion))
     state.add_hyp(new_hyp)
 
-@rule('or-')
-@rule('∨-')
+@rule(['or-', '∨-'], usage="""
+Axiom ∨-:
+    If Σ, A ⊢ C and Σ, B ⊢ C, then Σ, A ∨ B ⊢ C
+Usage: ∨- <index1> <index2> <formula1> <formula2>
+    <index1> — 1-based index of an existing hypothesis: Σ, A ⊢ C
+    <index2> — 1-based index of an existing hypothesis: Σ, B ⊢ C
+    <formula1> — a formula: A
+    <formula2> — a formula: B
+Effect: Adds Σ, A ∨ B ⊢ C as a new hypothesis.
+""")
 def r_or_elim(state, *params):
     if len(params) != 4:
-        err_msg = "Rule ∨-:\n\tIf Σ, A ⊢ C and Σ, B ⊢ C, then Σ, A ∨ B ⊢ C\n"
-        err_msg += "Usage: ∨- <index1> <index2> <formula1> <formula2>\n"
-        err_msg += "\t<index1> is a 1-based index of an existing hypothesis: Σ, A ⊢ C\n"
-        err_msg += "\t<index2> is a 1-based index of an existing hypothesis: Σ, B ⊢ C\n"
-        err_msg += "\t<formula1> is a formula: A\n"
-        err_msg += "\t<formula2> is a formula: B"
-        raise ValueError(err_msg)
+        raise ValueError(r_or_elim.usage)
     # Parse indices
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
@@ -209,15 +229,17 @@ def r_or_elim(state, *params):
     # Add the derived sequent as a hypothesis
     state.add_hyp(new_hyp)
 
-@rule('or+')
-@rule('∨+')
+@rule(['or+', '∨+'], usage="""
+Axiom ∨+:
+    If Σ ⊢ A, then Σ ⊢ A ∨ B and Σ ⊢ B ∨ A.
+Usage: ∨+ <index> <formula>
+    <index> — 1-based index of an existing hypothesis: Σ ⊢ A
+    <formula> — a formula: B
+Effect: Adds Σ ⊢ A ∨ B and Σ ⊢ B ∨ A as new hypotheses.
+""")
 def r_or_intro(state, *params):
     if len(params) != 2:
-        err_msg = "Rule ∨+:\n\tIf Σ ⊢ A, then Σ ⊢ A ∨ B and Σ ⊢ B ∨ A.\n"
-        err_msg += "Usage: ∨+ <index> <formula>\n"
-        err_msg += "\t<index> is a 1-based index of an existing hypothesis: Σ ⊢ A\n"
-        err_msg += "\t<formula> is a formula: B"
-        raise ValueError(err_msg)
+        raise ValueError(r_or_intro.usage)
     index = state.process_index_param(params[0])
     formula = Parser(params[1]).parse_formula_only()
     selected = state.hyp(index)
@@ -231,15 +253,17 @@ def r_or_intro(state, *params):
     state.add_hyp(new_hyp1)
     state.add_hyp(new_hyp2)
 
-@rule('iff-l')
-@rule('↔-l')
+@rule(['iff-l', '↔-l'], usage="""
+Axiom ↔-l:
+    If Σ ⊢ A ↔ B and Σ ⊢ A, then Σ ⊢ B.
+Usage: ↔-l <index1> <index2>
+    <index1> — 1-based index of an existing hypothesis: Σ ⊢ A ↔ B
+    <index2> — 1-based index of an existing hypothesis: Σ ⊢ A
+Effect: Adds Σ ⊢ B as a new hypothesis.
+""")
 def r_iff_elim_l(state, *params):
     if len(params) != 2:
-        err_msg = "Rule ↔-l:\n\tIf Σ ⊢ A ↔ B and Σ ⊢ A, then Σ ⊢ B.\n"
-        err_msg += "Usage: ↔-l <index1> <index2>\n"
-        err_msg += "\t<index1> is a 1-based index of an existing hypothesis: Σ ⊢ A ↔ B\n"
-        err_msg += "\t<index2> is a 1-based index of an existing hypothesis: Σ ⊢ A"
-        raise ValueError(err_msg)
+        raise ValueError(r_iff_elim_l.usage)
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
     s1 = state.hyp(index1)
@@ -254,15 +278,17 @@ def r_iff_elim_l(state, *params):
     new_hyp = Sequent(list(s1.premises), s1.conclusion.right)
     state.add_hyp(new_hyp)
 
-@rule('iff-r')
-@rule('↔-r')
+@rule(['iff-r', '↔-r'], usage="""
+Axiom ↔-r:
+    If Σ ⊢ A ↔ B and Σ ⊢ B, then Σ ⊢ A.
+Usage: ↔-r <index1> <index2>
+    <index1> — 1-based index of an existing hypothesis: Σ ⊢ A ↔ B
+    <index2> — 1-based index of an existing hypothesis: Σ ⊢ B
+Effect: Adds Σ ⊢ A as a new hypothesis.
+""")
 def r_iff_elim_r(state, *params):
     if len(params) != 2:
-        err_msg = "Rule ↔-r:\n\tIf Σ ⊢ A ↔ B and Σ ⊢ B, then Σ ⊢ A.\n"
-        err_msg += "Usage: ↔-r <index1> <index2>\n"
-        err_msg += "\t<index1> is a 1-based index of an existing hypothesis: Σ ⊢ A ↔ B\n"
-        err_msg += "\t<index2> is a 1-based index of an existing hypothesis: Σ ⊢ B"
-        raise ValueError(err_msg)
+        raise ValueError(r_iff_elim_r.usage)
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
     s1 = state.hyp(index1)
@@ -277,15 +303,17 @@ def r_iff_elim_r(state, *params):
     new_sequent = Sequent(list(s1.premises), s1.conclusion.left)
     state.add_hyp(new_sequent)
 
-@rule('iff+')
-@rule('↔+')
+@rule(['iff+', '↔+'], usage="""
+Axiom ↔+:
+    If Σ, A ⊢ B and Σ, B ⊢ A, then Σ ⊢ A ↔ B.
+Usage: ↔+ <index1> <index2>
+    <index1> — 1-based index of an existing hypothesis: Σ, A ⊢ B
+    <index2> — 1-based index of an existing hypothesis: Σ, B ⊢ A
+Effect: Adds Σ ⊢ A ↔ B as a new hypothesis.
+""")
 def r_iff_intro(state, *params):
     if len(params) != 2:
-        err_msg = "Rule ↔+:\n\tIf Σ, A ⊢ B and Σ, B ⊢ A, then Σ ⊢ A ↔ B.\n"
-        err_msg += "Usage: ↔+ <index1> <index2>\n"
-        err_msg += "\t<index1> is a 1-based index of an existing hypothesis: Σ, A ⊢ B\n"
-        err_msg += "\t<index2> is a 1-based index of an existing hypothesis: Σ, B ⊢ A"
-        raise ValueError(err_msg)
+        raise ValueError(r_iff_intro.usage)
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
     s1 = state.hyp(index1)
@@ -307,15 +335,17 @@ def r_iff_intro(state, *params):
     # Add as new hypothesis
     state.add_hyp(new_sequent)
 
-@rule('forall-')
-@rule('∀-')
+@rule(['forall-', '∀-'], usage="""
+Axiom ∀-:
+    If Σ ⊢ ∀x A(x), then Σ ⊢ A(t).
+Usage: ∀- <index> <term>
+    <index> — 1-based index of an existing hypothesis: Σ ⊢ ∀x A
+    <term> — a term: t
+Effect: Adds Σ ⊢ A(t) as a new hypothesis.
+""")
 def r_forall_elim(state, *params):
     if len(params) != 2:
-        err_msg = "Rule ∀-:\n\tIf Σ ⊢ ∀x A(x), then Σ ⊢ A(t).\n"
-        err_msg += "Usage: ∀- <index> <term>\n"
-        err_msg += "\t<index> is a 1-based index of an existing hypothesis: Σ ⊢ ∀x A\n"
-        err_msg += "\t<term> is a term: t"
-        raise ValueError(err_msg)
+        raise ValueError(r_forall_elim.usage)
     index = state.process_index_param(params[0])
     term = Parser(params[1]).parse_term_only()
     s = state.hyp(index)
@@ -329,16 +359,18 @@ def r_forall_elim(state, *params):
     # Add the instantiated sequent as a hypothesis
     state.add_hyp(new_sequent)
 
-@rule('forall+')
-@rule('∀+')
+@rule(['forall+', '∀+'], usage="""
+Axiom ∀+:
+    If Σ ⊢ A(`u) and `u does not occur in Σ, then Σ ⊢ ∀x A(x).
+Usage: ∀+ <index> <free variable> <bound variable>
+    <index> — 1-based index of an existing hypothesis: Σ ⊢ A(`u)
+    <free variable> — the name of a free variable: `u
+    <bound variable> — the name of a bound variable: x
+Effect: Adds Σ ⊢ ∀x A(x) as a new hypothesis.
+""")
 def r_forall_intro(state, *params):
     if len(params) != 3:
-        err_msg = "Rule ∀+:\n\tIf Σ ⊢ A(`u) and `u does not occur in Σ, then Σ ⊢ ∀x A(x).\n"
-        err_msg += "Usage: ∀+ <index> <free variable> <bound variable>\n"
-        err_msg += "\t<index> is a 1-based index of an existing hypothesis: Σ ⊢ A(`u)\n"
-        err_msg += "\t<free variable> is the name of a free variable: `u\n"
-        err_msg += "\t<bound variable> is the name of a bound variable: x"
-        raise ValueError(err_msg)
+        raise ValueError(r_forall_intro.usage)
     index = state.process_index_param(params[0])
     fv_name = params[1].strip(' `') # u
     v_name = params[2].strip() # x
@@ -359,17 +391,19 @@ def r_forall_intro(state, *params):
     # Add the quantified sequent as a hypothesis
     state.add_hyp(new_sequent)
 
-@rule('exists-')
-@rule('∃-')
+@rule(['exists-', '∃-'], usage="""
+Axiom ∃-:
+    If Σ, A(`u) ⊢ B and u does not occur in Σ or B, then Σ, ∃x A(x) ⊢ B.
+Usage: ∃- <index> <formula> <free variable> <bound variable>
+    <index> — 1-based index of an existing hypothesis: Σ, A(`u) ⊢ B
+    <formula> — a formula: A(`u)
+    <free variable> — the name of a free variable: `u
+    <bound variable> — the name of a bound variable: x
+Effect: Adds Σ, ∃x A(x) ⊢ B as a new hypothesis.
+""")
 def r_exists_elim(state, *params):
     if len(params) != 4:
-        err_msg = "Rule ∃-:\n\tIf Σ, A(`u) ⊢ B and u does not occur in Σ or B, then Σ, ∃x A(x) ⊢ B.\n"
-        err_msg += "Usage: ∃- <index> <formula> <free variable> <bound variable>\n"
-        err_msg += "\t<index> is a 1-based index of an existing hypothesis: Σ, A(`u) ⊢ B\n"
-        err_msg += "\t<formula> is a formula: A(`u)\n"
-        err_msg += "\t<free variable> is the name of a free variable: `u\n"
-        err_msg += "\t<bound variable> is the name of a bound variable: x"
-        raise ValueError(err_msg)
+        raise ValueError(r_exists_elim.usage)
     index = state.process_index_param(params[0])
     formula = Parser(params[1]).parse_formula_only() # A(`u)
     fv_name = params[2].strip(' `') # `u
@@ -398,23 +432,24 @@ def r_exists_elim(state, *params):
     new_sequent = Sequent(list(Sigma) + [ex_formula], s.conclusion)
     state.add_hyp(new_sequent)
 
-@rule('exists+')
-@rule('∃+')
+@rule(['exists+', '∃+'], usage="""
+Axiom ∃+:
+    If Σ ⊢ A(t), then Σ ⊢ ∃x A(x).
+Usage: ∃+ <index> <term> <formula>
+    <index> — 1-based index of an existing hypothesis: Σ ⊢ A(t)
+    <term> — a term: t
+    <formula> — an ∃-quantified formula: ∃x A(x)
+Effect: Adds Σ ⊢ ∃x A(x) as a new hypothesis.
+""")
 def r_exists_intro(state, *params):
     if len(params) != 3:
-        err_msg = "Rule ∃+:\n\tIf Σ ⊢ A(t), then Σ ⊢ ∃x A(x).\n"
-        err_msg += "Usage: ∃+ <index> <formula>\n"
-        err_msg += "\t<index> is a 1-based index of an existing hypothesis: Σ ⊢ A(t)\n"
-        err_msg += "\t<term> is a term: t\n"
-        err_msg += "\t<formula> is an ∃-quantified formula: ∃x A(x)"
-        raise ValueError(err_msg)
+        raise ValueError(r_exists_intro.usage)
     index = state.process_index_param(params[0])
     term = Parser(params[1]).parse_term_only()
     formula = Parser(params[2]).parse_formula_only()
     # Check the formula is an Exists
     if not isinstance(formula, Exists):
         raise ValueError(f"Formula {formula} is not an ∃-quantified formula.")
-
     s = state.hyp(index)
     # Check the hypothesis' conclusion matches the term and the provided formula
     x = formula.var
@@ -425,18 +460,19 @@ def r_exists_intro(state, *params):
     new_sequent = Sequent(list(s.premises), formula)
     state.add_hyp(new_sequent)
 
-@rule('eq-')
-@rule('=-')
-@rule('≈-')
+@rule(['eq-', '=-', '≈-'], usage="""
+Axiom ≈-:
+    If Σ ⊢ A(t1) and Σ ⊢ t1 ≈ t2, then Σ ⊢ A(t2).
+Usage: ≈- <index1> <index2> <formula> <free variable>
+    <index1> — 1-based index of an existing hypothesis: Σ ⊢ A(t1)
+    <index2> — 1-based index of an existing hypothesis: Σ ⊢ t1 ≈ t2
+    <formula> — a formula: A(`u), such that A(t1) is the result of substituting t1 for `u
+    <free variable> — the name of a free variable: `u
+Effect: Adds Σ ⊢ A(t2) as a new hypothesis.
+""")
 def r_eq_elim(state, *params):
     if len(params) != 4:
-        err_msg = "Rule ≈-:\n\tIf Σ ⊢ A(t1) and Σ ⊢ t1 ≈ t2, then Σ ⊢ A(t2).\n"
-        err_msg += "Usage: ≈- <index1> <index2> <formula> <free variable>\n"
-        err_msg += "\t<index1> is a 1-based index of an existing hypothesis: Σ ⊢ A(t1)\n"
-        err_msg += "\t<index2> is a 1-based index of an existing hypothesis: Σ ⊢ t1 ≈ t2\n"
-        err_msg += "\t<formula> is a formula: A(`u), such that A(t1) is the result of substituting t1 for `u\n"
-        err_msg += "\t<free variable> is the name of a free variable: `u"
-        raise ValueError(err_msg)
+        raise ValueError(r_eq_elim.usage)
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
     formula = Parser(params[2]).parse_formula_only()
@@ -461,15 +497,16 @@ def r_eq_elim(state, *params):
     new_sequent = Sequent(list(s1.premises), new_conc)
     state.add_hyp(new_sequent)
 
-@rule('eq+')
-@rule('=+')
-@rule('≈+')
+@rule(['eq+', '=+', '≈+'], usage="""
+Axiom ≈+:
+    If Σ ⊢ `u ≈ `u.
+Usage: ≈+ <free variable>
+    <free variable> — a free variable: `u
+Effect: Adds ⊢ `u ≈ `u as a new hypothesis.
+""")
 def r_eq_intro(state, *params):
     if len(params) != 1:
-        err_msg = "Rule ≈+:\n\tIf Σ ⊢ `u ≈ `u.\n"
-        err_msg += "Usage: ≈+ <free variable>\n"
-        err_msg += "\t<free variable> is a free variable: `u"
-        raise ValueError(err_msg)
+        raise ValueError(r_eq_intro.usage)
     fv_name = params[0].strip(' `')
     # Check fv_name is an identifier
     if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', fv_name) is None:
@@ -481,73 +518,94 @@ def r_eq_intro(state, *params):
     # Add the new sequent as a hypothesis
     state.add_hyp(new_sequent)
 
-@rule('PA1')
+@rule('PA1', usage="""
+Peano Axiom PA1:
+    ⊢ ∀x(¬(s(x) ≈ 0))
+Usage: PA1
+Effect: Adds ⊢ ∀x(¬(s(x) ≈ 0)) as a new hypothesis.
+""")
 def r_PA1(state, *params):
     if len(params) != 0:
-        err_msg = "Rule PA1:\n\t⊢ ∀x(¬(s(x) ≈ 0))\n"
-        err_msg += "Usage: PA1"
-        raise ValueError(err_msg)
+        raise ValueError(r_PA1.usage)
     formula = ForAll('x', Not(Atom("≈", [Func('s', [Var('x')]), Const('0')])))
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
 
-@rule('PA2')
+@rule('PA2', usage="""
+Peano Axiom PA2:
+    ⊢ ∀x∀y(s(x) ≈ s(y) → x ≈ y)
+Usage: PA2
+Effect: Adds ⊢ ∀x∀y(s(x) ≈ s(y) → x ≈ y) as a new hypothesis.
+""")
 def r_PA2(state, *params):
     if len(params) != 0:
-        err_msg = "Rule PA2:\n\t⊢ ∀x∀y(s(x) ≈ s(y) → x ≈ y)\n"
-        err_msg += "Usage: PA2"
-        raise ValueError(err_msg)
+        raise ValueError(r_PA2.usage)
     formula = ForAll('x', ForAll('y', Implies(Atom("≈", [Func('s', [Var('x')]), Func('s', [Var('y')])]), Atom("≈", [Var('x'), Var('y')]))))
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
 
-@rule('PA3')
+@rule('PA3', usage="""
+Peano Axiom PA3:
+    ⊢ ∀x(x + 0 ≈ x)
+Usage: PA3
+Effect: Adds ⊢ ∀x(x + 0 ≈ x) as a new hypothesis.
+""")
 def r_PA3(state, *params):
     if len(params) != 0:
-        err_msg = "Rule PA3:\n\t⊢ ∀x(x + 0 ≈ x)\n"
-        err_msg += "Usage: PA3"
-        raise ValueError(err_msg)
+        raise ValueError(r_PA3.usage)
     formula = ForAll('x', Atom("≈", [Func('+', [Var('x'), Const('0')]), Var('x')]))
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
 
-@rule('PA4')
+@rule('PA4', usage="""
+Peano Axiom PA4:
+    ⊢ ∀x∀y(x + s(y) ≈ s(x + y))
+Usage: PA4
+Effect: Adds ⊢ ∀x∀y(x + s(y) ≈ s(x + y)) as a new hypothesis.
+""")
 def r_PA4(state, *params):
     if len(params) != 0:
-        err_msg = "Rule PA4:\n\t⊢ ∀x∀y(x + s(y) ≈ s(x + y))\n"
-        err_msg += "Usage: PA4"
-        raise ValueError(err_msg)
+        raise ValueError(r_PA4.usage)
     formula = ForAll('x', ForAll('y', Atom("≈", [Func('+', [Var('x'), Func('s', [Var('y')])]), Func('s', [Func('+', [Var('x'), Var('y')])])])))
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
 
-@rule('PA5')
+@rule('PA5', usage="""
+Peano Axiom PA5:
+    ⊢ ∀x(x ⋅ 0 ≈ 0)
+Usage: PA5
+Effect: Adds ⊢ ∀x(x ⋅ 0 ≈ 0) as a new hypothesis.
+""")
 def r_PA5(state, *params):
     if len(params) != 0:
-        err_msg = "Rule PA5:\n\t⊢ ∀x(x ⋅ 0 ≈ 0)\n"
-        err_msg += "Usage: PA5"
-        raise ValueError(err_msg)
+        raise ValueError(r_PA5.usage)
     formula = ForAll('x', Atom("≈", [Func('⋅', [Var('x'), Const('0')]), Const('0')]))
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
 
-@rule('PA6')
+@rule('PA6', usage="""
+Peano Axiom PA6:
+    ⊢ ∀x∀y(x ⋅ s(y) ≈ x ⋅ y + x)
+Usage: PA6
+Effect: Adds ⊢ ∀x∀y(x ⋅ s(y) ≈ x ⋅ y + x) as a new hypothesis.
+""")
 def r_PA6(state, *params):
     if len(params) != 0:
-        err_msg = "Rule PA6:\n\t⊢ ∀x∀y(x ⋅ s(y) ≈ x ⋅ y + x)\n"
-        err_msg += "Usage: PA6"
-        raise ValueError(err_msg)
+        raise ValueError(r_PA6.usage)
     formula = ForAll('x', ForAll('y', Atom("≈", [Func('⋅', [Var('x'), Func('s', [Var('y')])]), Func('+', [Func('⋅', [Var('x'), Var('y')]), Var('x')])])))
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
 
-@rule('PA7')
+@rule('PA7', usage="""
+Peano Axiom PA7:
+    ⊢ A(0) ∧ ∀x(A(x) → A(s(x))) → ∀x A(x)
+Usage: PA7 <formula>
+    <formula> — a formula: ∀x A(x)
+Effect: Adds ⊢ A(0) ∧ ∀x(A(x) → A(s(x))) → ∀x A(x) as a new hypothesis.
+""")
 def r_PA7(state, *params):
     if len(params) != 1:
-        err_msg = "Rule PA7:\n\t⊢ A(0) ∧ ∀x(A(x) → A(s(x))) → ∀x A(x)\n"
-        err_msg += "Usage: PA7 <formula>\n"
-        err_msg += "\t<formula> is a formula: ∀x A(x)"
-        raise ValueError(err_msg)
+        raise ValueError(r_PA7.usage)
     formula = Parser(params[0]).parse_formula_only()
     if not isinstance(formula, ForAll):
         raise ValueError(f"Formula {formula} is not a ∀-quantified formula.")
@@ -559,16 +617,17 @@ def r_PA7(state, *params):
     new_sequent = Sequent([], new_conc)
     state.add_hyp(new_sequent)
 
-@rule('in')
-@rule('In')
-@rule('∈')
+@rule(['in', 'In', '∈'], usage="""
+Theorem ∈:
+    If A ∈ Σ, then Σ ⊢ A
+Usage: ∈ <formulas> <index>
+    <formulas> — a set of formulas: Σ
+    <index> — 1-based index of a formula in Σ: A
+Effect: Adds Σ ⊢ A as a new hypothesis.
+""")
 def r_in(state, *params):
     if len(params) != 2:
-        err_msg = "Proven result ∈:\n\tIf A ∈ Σ, then Σ ⊢ A\n"
-        err_msg += "Usage: ∈ <formulas> <index>\n"
-        err_msg += "\t<formulas> is a set of formulas: Σ\n"
-        err_msg += "\t<index> is a 1-based index of a formula in Σ: A"
-        raise ValueError(err_msg)
+        raise ValueError(r_in.usage)
     formulas = Parser(params[0]).parse_formulas_only()
     index = int(params[1])
     if index < 1 or index > len(formulas):
@@ -579,17 +638,18 @@ def r_in(state, *params):
     # Add the new sequent as a hypothesis
     state.add_hyp(new_sequent)
 
-@rule('not+')
-@rule('¬+')
+@rule(['not+', '¬+'], usage="""
+Theorem ¬+:
+    If Σ, A ⊢ B and Σ, A ⊢ ¬B, then Σ ⊢ ¬A.
+Usage: ¬+ <index1> <index2> <formula>
+    <index1> — 1-based index of an existing hypothesis: Σ, A ⊢ B
+    <index2> — 1-based index of an existing hypothesis: Σ, A ⊢ ¬B
+    <formula> — a formula: A
+Effect: Adds Σ ⊢ ¬A as a new hypothesis.
+""")
 def r_not_intro(state, *params):
-    # If Σ, 𝐴 ⊢ 𝐵 and Σ, 𝐴 ⊢ ¬𝐵, then Σ ⊢ ¬𝐴.
     if len(params) != 3:
-        err_msg = "Rule ¬+:\n\tIf Σ, A ⊢ B and Σ, A ⊢ ¬B, then Σ ⊢ ¬A.\n"
-        err_msg += "Usage: ¬+ <index1> <index2> <formula>\n"
-        err_msg += "\t<index1> is a 1-based index of an existing hypothesis: Σ, A ⊢ B\n"
-        err_msg += "\t<index2> is a 1-based index of an existing hypothesis: Σ, A ⊢ ¬B\n"
-        err_msg += "\t<formula> is a formula: A"
-        raise ValueError(err_msg)
+        raise ValueError(r_not_intro.usage)
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
     s1 = state.hyp(index1)
@@ -606,34 +666,35 @@ def r_not_intro(state, *params):
     # Check A is in the premises of both hypotheses
     if A not in s1.premises:
         raise ValueError(f"Formula {A} not in premises of hypothesis")
-
     new_hyp = Sequent(list(s1.premises - {A}), Not(A))
     state.add_hyp(new_hyp)
 
-@rule('inconsistency')
-@rule('Inconsistency')
+@rule(['inconsistency', 'Inconsistency'], usage="""
+Theorem Inconsistency:
+    A, ¬A ⊢ B
+Usage: Inconsistency <formula1> <formula2>
+    <formula1> — a formula: A
+    <formula2> — a formula: B
+Effect: Adds A, ¬A ⊢ B as a new hypothesis (ex falso quodlibet).
+""")
 def r_inconsistency(state, *params):
     if len(params) != 2:
-        err_msg = "Proven result Inconsistency:\n\tA, ¬A ⊢ B\n"
-        err_msg += "Usage: Inconsistency <formula> <formula>\n"
-        err_msg += "\t<formula> is a formula: A\n"
-        err_msg += "\t<formula> is a formula: B"
-        raise ValueError(err_msg)
+        raise ValueError(r_inconsistency.usage)
     formula1 = Parser(params[0]).parse_formula_only()
     formula2 = Parser(params[1]).parse_formula_only()
     new_sequent = Sequent([formula1, Not(formula1)], formula2)
     state.add_hyp(new_sequent)
 
-@rule('flip-flop')
-@rule('Flip-Flop')
-@rule('flipflop')
-@rule('FlipFlop')
+@rule(['flip-flop', 'Flip-Flop', 'flipflop', 'FlipFlop'], usage="""
+Theorem FlipFlop:
+    If A ⊢ B, then ¬B ⊢ ¬A
+Usage: FlipFlop <index>
+    <index> — 1-based index of an existing hypothesis: A ⊢ B
+Effect: Adds ¬B ⊢ ¬A as a new hypothesis.
+""")
 def r_flipflop(state, *params):
     if len(params) != 1:
-        err_msg = "Proven result FlipFlop:\n\tIf A ⊢ B, then ¬B ⊢ ¬A\n"
-        err_msg += "Usage: FlipFlop <index>\n"
-        err_msg += "\t<index> is a 1-based index of an existing hypothesis: A ⊢ B"
-        raise ValueError(err_msg)
+        raise ValueError(r_flipflop.usage)
     index = state.process_index_param(params[0])
     s = state.hyp(index)
     if len(s.premises) != 1:
@@ -643,28 +704,32 @@ def r_flipflop(state, *params):
     new_sequent = Sequent([Not(B)], Not(A))
     state.add_hyp(new_sequent)
 
-@rule('=refl')
-@rule('≈refl')
+@rule(['=refl', '≈refl'], usage="""
+Theorem ≈refl:
+    ⊢ t ≈ t
+Usage: ≈refl <term>
+    <term> — a term: t
+Effect: Adds ⊢ t ≈ t as a new hypothesis (reflexivity of equality).
+""")
 def r_eq_refl(state, *params):
     if len(params) != 1:
-        err_msg = "Proven result ≈refl:\n\t⊢ t ≈ t\n"
-        err_msg += "Usage: ≈refl <term>\n"
-        err_msg += "\t<term> is a term: t"
-        raise ValueError(err_msg)
+        raise ValueError(r_eq_refl.usage)
     term = Parser(params[0]).parse_term_only()
     formula = Atom("≈", [term, term])
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
 
-@rule('=symm')
-@rule('≈symm')
+@rule(['=symm', '≈symm'], usage="""
+Theorem ≈symm:
+    t1 ≈ t2 ⊢ t2 ≈ t1
+Usage: ≈symm <term1> <term2>
+    <term1> — a term: t1
+    <term2> — a term: t2
+Effect: Adds t1 ≈ t2 ⊢ t2 ≈ t1 as a new hypothesis (symmetry of equality).
+""")
 def r_eq_symm(state, *params):
     if len(params) != 2:
-        err_msg = "Proven result ≈symm:\n\tt1 ≈ t2 ⊢ t2 ≈ t1\n"
-        err_msg += "Usage: ≈symm <term1> <index2>\n"
-        err_msg += "\t<term1> is a term: t1\n"
-        err_msg += "\t<term2> is a term: t2"
-        raise ValueError(err_msg)
+        raise ValueError(r_eq_symm.usage)
     term1 = Parser(params[0]).parse_term_only()
     term2 = Parser(params[1]).parse_term_only()
     premise = Atom("≈", [term1, term2])
@@ -672,16 +737,18 @@ def r_eq_symm(state, *params):
     new_sequent = Sequent([premise], conclusion)
     state.add_hyp(new_sequent)
 
-@rule('=trans')
-@rule('≈trans')
+@rule(['=trans', '≈trans'], usage="""
+Theorem ≈trans:
+    t1 ≈ t2, t2 ≈ t3 ⊢ t1 ≈ t3
+Usage: ≈trans <term1> <term2> <term3>
+    <term1> — a term: t1
+    <term2> — a term: t2
+    <term3> — a term: t3
+Effect: Adds t1 ≈ t2, t2 ≈ t3 ⊢ t1 ≈ t3 as a new hypothesis (transitivity of equality).
+""")
 def r_eq_trans(state, *params):
     if len(params) != 3:
-        err_msg = "Proven result ≈trans:\n\tt1 ≈ t2, t2 ≈ t3 ⊢ t1 ≈ t3\n"
-        err_msg += "Usage: ≈trans <term1> <term2> <term3>\n"
-        err_msg += "\t<term1> is a term: t1\n"
-        err_msg += "\t<term2> is a term: t2\n"
-        err_msg += "\t<term3> is a term: t3"
-        raise ValueError(err_msg)
+        raise ValueError(r_eq_trans.usage)
     term1 = Parser(params[0]).parse_term_only()
     term2 = Parser(params[1]).parse_term_only()
     term3 = Parser(params[2]).parse_term_only()
