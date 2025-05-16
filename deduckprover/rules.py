@@ -3,8 +3,7 @@ from .syntax import *
 from .parser import Parser
 from .verifier import rule
 
-@rule('exact', usage="""
-Usage: exact [index]
+@rule('exact', usage="""Usage: exact [index]
     [index] — 1-based index of an existing hypothesis (optional; defaults to last hypothesis)
 Effect: Discharges the goal if its conclusion exactly matches the selected hypothesis.
 """)
@@ -22,8 +21,7 @@ def r_exact(state, *params):
     else:
         raise ValueError("Exact rule failed: not an exact match.")
 
-@rule('rm', usage="""
-Usage: rm <index>
+@rule('rm', usage="""Usage: rm <index>
     <index> — 1-based index of an existing hypothesis
 Effect: Removes the selected hypothesis from the current goal.
 """)
@@ -34,8 +32,7 @@ def r_remove(state, *params):
     index = state.process_index_param(params[0])
     state.remove_hyp(index)
 
-@rule(['Ref', 'ref'], usage="""
-Axiom Ref:
+@rule(['Ref', 'ref'], usage="""Axiom Ref:
     A ⊢ A
 Usage: Ref <formula>
     <formula> — a formula: A
@@ -48,8 +45,7 @@ def r_ref(state, *params):
     new_hyp = Sequent([formula], formula)
     state.add_hyp(new_hyp)
 
-@rule('+', usage="""
-Axiom +:
+@rule('+', usage="""Axiom +:
     If Σ ⊢ A, then Σ, Σ' ⊢ A
 Usage: + <index> <formulas>
     <index> — 1-based index of an existing hypothesis: Σ ⊢ A
@@ -65,10 +61,9 @@ def r_add(state, *params):
     new_hyp = Sequent(list(selected.premises) + formulas, selected.conclusion)
     state.add_hyp(new_hyp)
 
-@rule(['not-', '¬-'], usage="""
-Axiom ¬-:
+@rule(['not-', '¬-'], usage="""Axiom ¬-:
     If Σ, ¬A ⊢ B and Σ, ¬A ⊢ ¬B, then Σ ⊢ A
-Usage: ¬- <index1> <index2> <formula>
+Usage: ¬- <index1> <index2> [formula]
     <index1> — 1-based index of an existing hypothesis: Σ, ¬A ⊢ B
     <index2> — 1-based index of an existing hypothesis: Σ, ¬A ⊢ ¬B
     [formula] — a formula: A (optional; if not provided, DeDuck will infer A as the only formula such that ¬A appears in the premises of both selected hypotheses)
@@ -108,8 +103,7 @@ def r_not_elim(state, *params):
     new_hyp = Sequent(list(s1.premises - {not_formula}), formula)
     state.add_hyp(new_hyp)
 
-@rule(['imp-', '→-'], usage="""
-Axiom →-:
+@rule(['imp-', '→-'], usage="""Axiom →-:
     If Σ ⊢ A → B and Σ ⊢ A, then Σ ⊢ B
 Usage: →- <index1> <index2>
     <index1> — 1-based index of an existing hypothesis: Σ ⊢ A → B
@@ -133,10 +127,9 @@ def r_implies_elim(state, *params):
     new_hyp = Sequent(list(s1.premises), s1.conclusion.right)
     state.add_hyp(new_hyp)
 
-@rule(['imp+', '→+'], usage="""
-Axiom →+:
+@rule(['imp+', '→+'], usage="""Axiom →+:
     If Σ, A ⊢ B, then Σ ⊢ A → B
-Usage: →+ <index> <formula>
+Usage: →+ <index> [formula]
     <index> — 1-based index of an existing hypothesis: Σ, A ⊢ B
     [formula] — a formula: A (optional; if not provided, DeDuck will infer A as the only formula in the selected hypothesis)
 Effect: Adds Σ ⊢ A → B as a new hypothesis.
@@ -160,8 +153,7 @@ def r_implies_intro(state, *params):
     new_hyp = Sequent(list(new_premises), new_conclusion)
     state.add_hyp(new_hyp)
 
-@rule(['and-', '∧-'], usage="""
-Axiom ∧-:
+@rule(['and-', '∧-'], usage="""Axiom ∧-:
     If Σ ⊢ A ∧ B, then Σ ⊢ A and Σ ⊢ B
 Usage: ∧- <index>
     <index> — 1-based index of an existing hypothesis: Σ ⊢ A ∧ B
@@ -184,8 +176,7 @@ def r_and_elim(state, *params):
     state.add_hyp(new_left)
     state.add_hyp(new_right)
 
-@rule(['and+', '∧+'], usage="""
-Axiom ∧+:
+@rule(['and+', '∧+'], usage="""Axiom ∧+:
     If Σ ⊢ A and Σ ⊢ B, then Σ ⊢ A ∧ B
 Usage: ∧+ <index1> <index2>
     <index1> — 1-based index of an existing hypothesis: Σ ⊢ A
@@ -204,48 +195,60 @@ def r_and_intro(state, *params):
     new_hyp = Sequent(list(s1.premises), And(s1.conclusion, s2.conclusion))
     state.add_hyp(new_hyp)
 
-@rule(['or-', '∨-'], usage="""
-Axiom ∨-:
+@rule(['or-', '∨-'], usage="""Axiom ∨-:
     If Σ, A ⊢ C and Σ, B ⊢ C, then Σ, A ∨ B ⊢ C
-Usage: ∨- <index1> <index2> <formula1> <formula2>
+Usage: ∨- <index1> <index2> [<formulas> <formula1> <formula2>]
     <index1> — 1-based index of an existing hypothesis: Σ, A ⊢ C
     <index2> — 1-based index of an existing hypothesis: Σ, B ⊢ C
-    <formula1> — a formula: A
-    <formula2> — a formula: B
+    [<formulas> <formula1> <formula2>] — specifies all of the followig: a comma-separated list of formulas Σ, a formula A, and a formula B (optional; if not provided, DeDuck will infer A and B as the distinct pair of formulas that differ in the premises of both selected hypotheses)
 Effect: Adds Σ, A ∨ B ⊢ C as a new hypothesis.
 """)
 def r_or_elim(state, *params):
-    if len(params) != 4:
+    if len(params) == 2:
+        # Only indices provided: infer formulas and premises
+        index1 = state.process_index_param(params[0])
+        index2 = state.process_index_param(params[1])
+        s1 = state.hyp(index1)
+        s2 = state.hyp(index2)
+        # Find the two formulas that differ in the premises
+        diff1 = set(s1.premises) - set(s2.premises)
+        diff2 = set(s2.premises) - set(s1.premises)
+        if len(diff1) != 1 or len(diff2) != 1:
+            raise ValueError("Could not infer disjuncts: premises must differ by exactly one formula each.")
+        formula1 = next(iter(diff1))
+        formula2 = next(iter(diff2))
+        sigma1 = set(s1.premises) - {formula1}
+        sigma2 = set(s2.premises) - {formula2}
+        if sigma1 != sigma2:
+            raise ValueError("Premises other than the disjunct do not match between hypotheses.")
+        if s1.conclusion != s2.conclusion:
+            raise ValueError("Conclusions of both hypotheses must match.")
+        new_disj = Or(formula1, formula2)
+        new_hyp = Sequent(list(sigma1) + [new_disj], s1.conclusion)
+        state.add_hyp(new_hyp)
+    elif len(params) == 5:
+        # All parameters provided: indices, formulas, and premises
+        index1 = state.process_index_param(params[0])
+        index2 = state.process_index_param(params[1])
+        formulas = Parser(params[2]).parse_formulas_only()
+        formula1 = Parser(params[3]).parse_formula_only()
+        formula2 = Parser(params[4]).parse_formula_only()
+        s1 = state.hyp(index1)
+        s2 = state.hyp(index2)
+        # Check that the premises match the provided formulas
+        if set(s1.premises) != set(formulas + [formula1]):
+            raise ValueError(f"Premises of hypothesis {index1} do not match provided Σ and formula1.")
+        if set(s2.premises) != set(formulas + [formula2]):
+            raise ValueError(f"Premises of hypothesis {index2} do not match provided Σ and formula2.")
+        if s1.conclusion != s2.conclusion:
+            raise ValueError("Conclusions of both hypotheses must match.")
+        new_disj = Or(formula1, formula2)
+        new_hyp = Sequent(formulas + [new_disj], s1.conclusion)
+        state.add_hyp(new_hyp)
+    else:
         raise ValueError()
-    # Parse indices
-    index1 = state.process_index_param(params[0])
-    index2 = state.process_index_param(params[1])
-    # Parse the disjunct formulas A and B
-    formula1 = Parser(params[2]).parse_formula_only()
-    formula2 = Parser(params[3]).parse_formula_only()
-    s1 = state.hyp(index1)
-    s2 = state.hyp(index2)
-    # Check that each hypothesis has the correct disjunct in its premises
-    if formula1 not in s1.premises:
-        raise ValueError(f"Formula {formula1} not in premises of hypothesis {s1}")
-    if formula2 not in s2.premises:
-        raise ValueError(f"Formula {formula2} not in premises of hypothesis {s2}")
-    # Ensure the remaining premises match
-    sigma1 = s1.premises - {formula1}
-    sigma2 = s2.premises - {formula2}
-    if sigma1 != sigma2:
-        raise ValueError("Premises other than the disjunct do not match between hypotheses.")
-    # Ensure conclusions match
-    if s1.conclusion != s2.conclusion:
-        raise ValueError("Conclusions of both hypotheses must match.")
-    # Build disjunction and new sequent
-    new_disj = Or(formula1, formula2)
-    new_hyp = Sequent(list(sigma1) + [new_disj], s1.conclusion)
-    # Add the derived sequent as a hypothesis
-    state.add_hyp(new_hyp)
 
-@rule(['or+', '∨+'], usage="""
-Axiom ∨+:
+@rule(['or+', '∨+'], usage="""Axiom ∨+:
     If Σ ⊢ A, then Σ ⊢ A ∨ B and Σ ⊢ B ∨ A.
 Usage: ∨+ <index> <formula>
     <index> — 1-based index of an existing hypothesis: Σ ⊢ A
@@ -268,8 +271,7 @@ def r_or_intro(state, *params):
     state.add_hyp(new_hyp1)
     state.add_hyp(new_hyp2)
 
-@rule(['iff-l', '↔-l'], usage="""
-Axiom ↔-l:
+@rule(['iff-l', '↔-l'], usage="""Axiom ↔-l:
     If Σ ⊢ A ↔ B and Σ ⊢ A, then Σ ⊢ B.
 Usage: ↔-l <index1> <index2>
     <index1> — 1-based index of an existing hypothesis: Σ ⊢ A ↔ B
@@ -293,8 +295,7 @@ def r_iff_elim_l(state, *params):
     new_hyp = Sequent(list(s1.premises), s1.conclusion.right)
     state.add_hyp(new_hyp)
 
-@rule(['iff-r', '↔-r'], usage="""
-Axiom ↔-r:
+@rule(['iff-r', '↔-r'], usage="""Axiom ↔-r:
     If Σ ⊢ A ↔ B and Σ ⊢ B, then Σ ⊢ A.
 Usage: ↔-r <index1> <index2>
     <index1> — 1-based index of an existing hypothesis: Σ ⊢ A ↔ B
@@ -318,8 +319,7 @@ def r_iff_elim_r(state, *params):
     new_sequent = Sequent(list(s1.premises), s1.conclusion.left)
     state.add_hyp(new_sequent)
 
-@rule(['iff+', '↔+'], usage="""
-Axiom ↔+:
+@rule(['iff+', '↔+'], usage="""Axiom ↔+:
     If Σ, A ⊢ B and Σ, B ⊢ A, then Σ ⊢ A ↔ B.
 Usage: ↔+ <index1> <index2>
     <index1> — 1-based index of an existing hypothesis: Σ, A ⊢ B
@@ -350,8 +350,7 @@ def r_iff_intro(state, *params):
     # Add as new hypothesis
     state.add_hyp(new_sequent)
 
-@rule(['forall-', '∀-'], usage="""
-Axiom ∀-:
+@rule(['forall-', '∀-'], usage="""Axiom ∀-:
     If Σ ⊢ ∀x A(x), then Σ ⊢ A(t).
 Usage: ∀- <index> <term>
     <index> — 1-based index of an existing hypothesis: Σ ⊢ ∀x A
@@ -374,8 +373,7 @@ def r_forall_elim(state, *params):
     # Add the instantiated sequent as a hypothesis
     state.add_hyp(new_sequent)
 
-@rule(['forall+', '∀+'], usage="""
-Axiom ∀+:
+@rule(['forall+', '∀+'], usage="""Axiom ∀+:
     If Σ ⊢ A(`u) and `u does not occur in Σ, then Σ ⊢ ∀x A(x).
 Usage: ∀+ <index> <free variable> <bound variable>
     <index> — 1-based index of an existing hypothesis: Σ ⊢ A(`u)
@@ -406,8 +404,7 @@ def r_forall_intro(state, *params):
     # Add the quantified sequent as a hypothesis
     state.add_hyp(new_sequent)
 
-@rule(['exists-', '∃-'], usage="""
-Axiom ∃-:
+@rule(['exists-', '∃-'], usage="""Axiom ∃-:
     If Σ, A(`u) ⊢ B and u does not occur in Σ or B, then Σ, ∃x A(x) ⊢ B.
 Usage: ∃- <index> <formula> <free variable> <bound variable>
     <index> — 1-based index of an existing hypothesis: Σ, A(`u) ⊢ B
@@ -447,8 +444,7 @@ def r_exists_elim(state, *params):
     new_sequent = Sequent(list(Sigma) + [ex_formula], s.conclusion)
     state.add_hyp(new_sequent)
 
-@rule(['exists+', '∃+'], usage="""
-Axiom ∃+:
+@rule(['exists+', '∃+'], usage="""Axiom ∃+:
     If Σ ⊢ A(t), then Σ ⊢ ∃x A(x).
 Usage: ∃+ <index> <term> <formula>
     <index> — 1-based index of an existing hypothesis: Σ ⊢ A(t)
@@ -475,8 +471,7 @@ def r_exists_intro(state, *params):
     new_sequent = Sequent(list(s.premises), formula)
     state.add_hyp(new_sequent)
 
-@rule(['eq-', '=-', '≈-'], usage="""
-Axiom ≈-:
+@rule(['eq-', '=-', '≈-'], usage="""Axiom ≈-:
     If Σ ⊢ A(t1) and Σ ⊢ t1 ≈ t2, then Σ ⊢ A(t2).
 Usage: ≈- <index1> <index2> <formula> <free variable>
     <index1> — 1-based index of an existing hypothesis: Σ ⊢ A(t1)
@@ -512,8 +507,7 @@ def r_eq_elim(state, *params):
     new_sequent = Sequent(list(s1.premises), new_conc)
     state.add_hyp(new_sequent)
 
-@rule(['eq+', '=+', '≈+'], usage="""
-Axiom ≈+:
+@rule(['eq+', '=+', '≈+'], usage="""Axiom ≈+:
     If Σ ⊢ `u ≈ `u.
 Usage: ≈+ <free variable>
     <free variable> — a free variable: `u
@@ -533,8 +527,7 @@ def r_eq_intro(state, *params):
     # Add the new sequent as a hypothesis
     state.add_hyp(new_sequent)
 
-@rule('PA1', usage="""
-Peano Axiom PA1:
+@rule('PA1', usage="""Peano Axiom PA1:
     ⊢ ∀x(¬(s(x) ≈ 0))
 Usage: PA1
 Effect: Adds ⊢ ∀x(¬(s(x) ≈ 0)) as a new hypothesis.
@@ -546,8 +539,7 @@ def r_PA1(state, *params):
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
 
-@rule('PA2', usage="""
-Peano Axiom PA2:
+@rule('PA2', usage="""Peano Axiom PA2:
     ⊢ ∀x∀y(s(x) ≈ s(y) → x ≈ y)
 Usage: PA2
 Effect: Adds ⊢ ∀x∀y(s(x) ≈ s(y) → x ≈ y) as a new hypothesis.
@@ -559,8 +551,7 @@ def r_PA2(state, *params):
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
 
-@rule('PA3', usage="""
-Peano Axiom PA3:
+@rule('PA3', usage="""Peano Axiom PA3:
     ⊢ ∀x(x + 0 ≈ x)
 Usage: PA3
 Effect: Adds ⊢ ∀x(x + 0 ≈ x) as a new hypothesis.
@@ -572,8 +563,7 @@ def r_PA3(state, *params):
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
 
-@rule('PA4', usage="""
-Peano Axiom PA4:
+@rule('PA4', usage="""Peano Axiom PA4:
     ⊢ ∀x∀y(x + s(y) ≈ s(x + y))
 Usage: PA4
 Effect: Adds ⊢ ∀x∀y(x + s(y) ≈ s(x + y)) as a new hypothesis.
@@ -585,8 +575,7 @@ def r_PA4(state, *params):
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
 
-@rule('PA5', usage="""
-Peano Axiom PA5:
+@rule('PA5', usage="""Peano Axiom PA5:
     ⊢ ∀x(x ⋅ 0 ≈ 0)
 Usage: PA5
 Effect: Adds ⊢ ∀x(x ⋅ 0 ≈ 0) as a new hypothesis.
@@ -598,8 +587,7 @@ def r_PA5(state, *params):
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
 
-@rule('PA6', usage="""
-Peano Axiom PA6:
+@rule('PA6', usage="""Peano Axiom PA6:
     ⊢ ∀x∀y(x ⋅ s(y) ≈ x ⋅ y + x)
 Usage: PA6
 Effect: Adds ⊢ ∀x∀y(x ⋅ s(y) ≈ x ⋅ y + x) as a new hypothesis.
@@ -611,8 +599,7 @@ def r_PA6(state, *params):
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
 
-@rule('PA7', usage="""
-Peano Axiom PA7:
+@rule('PA7', usage="""Peano Axiom PA7:
     ⊢ A(0) ∧ ∀x(A(x) → A(s(x))) → ∀x A(x)
 Usage: PA7 <formula>
     <formula> — a formula: ∀x A(x)
@@ -632,8 +619,7 @@ def r_PA7(state, *params):
     new_sequent = Sequent([], new_conc)
     state.add_hyp(new_sequent)
 
-@rule(['in', 'In', '∈'], usage="""
-Theorem ∈:
+@rule(['in', 'In', '∈'], usage="""Theorem ∈:
     If A ∈ Σ, then Σ ⊢ A
 Usage: ∈ <formulas> <index>
     <formulas> — a set of formulas: Σ
@@ -653,8 +639,7 @@ def r_in(state, *params):
     # Add the new sequent as a hypothesis
     state.add_hyp(new_sequent)
 
-@rule(['not+', '¬+'], usage="""
-Theorem ¬+:
+@rule(['not+', '¬+'], usage="""Theorem ¬+:
     If Σ, A ⊢ B and Σ, A ⊢ ¬B, then Σ ⊢ ¬A.
 Usage: ¬+ <index1> <index2> <formula>
     <index1> — 1-based index of an existing hypothesis: Σ, A ⊢ B
@@ -684,8 +669,7 @@ def r_not_intro(state, *params):
     new_hyp = Sequent(list(s1.premises - {A}), Not(A))
     state.add_hyp(new_hyp)
 
-@rule(['inconsistency', 'Inconsistency'], usage="""
-Theorem Inconsistency:
+@rule(['inconsistency', 'Inconsistency'], usage="""Theorem Inconsistency:
     A, ¬A ⊢ B
 Usage: Inconsistency <formula1> <formula2>
     <formula1> — a formula: A
@@ -700,8 +684,7 @@ def r_inconsistency(state, *params):
     new_sequent = Sequent([formula1, Not(formula1)], formula2)
     state.add_hyp(new_sequent)
 
-@rule(['flip-flop', 'Flip-Flop', 'flipflop', 'FlipFlop'], usage="""
-Theorem FlipFlop:
+@rule(['flip-flop', 'Flip-Flop', 'flipflop', 'FlipFlop'], usage="""Theorem FlipFlop:
     If A ⊢ B, then ¬B ⊢ ¬A
 Usage: FlipFlop <index>
     <index> — 1-based index of an existing hypothesis: A ⊢ B
@@ -719,8 +702,7 @@ def r_flipflop(state, *params):
     new_sequent = Sequent([Not(B)], Not(A))
     state.add_hyp(new_sequent)
 
-@rule(['=refl', '≈refl'], usage="""
-Theorem ≈refl:
+@rule(['=refl', '≈refl'], usage="""Theorem ≈refl:
     ⊢ t ≈ t
 Usage: ≈refl <term>
     <term> — a term: t
@@ -734,8 +716,7 @@ def r_eq_refl(state, *params):
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
 
-@rule(['=symm', '≈symm'], usage="""
-Theorem ≈symm:
+@rule(['=symm', '≈symm'], usage="""Theorem ≈symm:
     t1 ≈ t2 ⊢ t2 ≈ t1
 Usage: ≈symm <term1> <term2>
     <term1> — a term: t1
@@ -752,8 +733,7 @@ def r_eq_symm(state, *params):
     new_sequent = Sequent([premise], conclusion)
     state.add_hyp(new_sequent)
 
-@rule(['=trans', '≈trans'], usage="""
-Theorem ≈trans:
+@rule(['=trans', '≈trans'], usage="""Theorem ≈trans:
     t1 ≈ t2, t2 ≈ t3 ⊢ t1 ≈ t3
 Usage: ≈trans <term1> <term2> <term3>
     <term1> — a term: t1

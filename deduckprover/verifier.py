@@ -22,6 +22,11 @@ def rule(name, usage=None):
         return fn
     return decorator
 
+class UnknownRule(ValueError):
+    """Exception raised for unknown rule applications."""
+    def __init__(self, rule_name):
+        super().__init__(f"Unknown rule: {rule_name}")
+
 class ProofState:
     
     def __init__(self, hyps, goal):
@@ -40,7 +45,7 @@ class ProofState:
 
     def apply(self, rule_name, *args):
         if rule_name not in dict_rules:
-            raise ValueError(f"Unknown rule: {rule_name}")
+            raise UnknownRule(rule_name)
         dict_rules[rule_name](self, *args)
 
     def hyp(self, index):
@@ -76,7 +81,10 @@ class ProofState:
         Returns 0-based index.  
         Raises ValueError if the index is out of range.
         """
-        index_from_one = int(input)
+        try:
+            index_from_one = int(input)
+        except ValueError:
+            raise ValueError("Invalid index format. Must be an integer.")
         if index_from_one < 1 or index_from_one > len(self.hyps):
             raise ValueError("Invalid index for hypotheses.")
         return index_from_one - 1

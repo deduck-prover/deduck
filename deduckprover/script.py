@@ -5,6 +5,7 @@ import shlex
 from .parser import Parser
 from .verifier import ProofState
 from .verifier import dict_rules
+from .verifier import UnknownRule
 
 class ProofScriptFailure(ValueError):
     """
@@ -91,8 +92,19 @@ def run_script(script):
             line_checked = lineNum
             if state.is_closed():
                 line_closed = lineNum
-        except (ValueError, UnexpectedInput) as e:
-            fn = dict_rules.get(name)
-            usage = getattr(fn, 'usage', None)
-            raise ProofScriptFailure(lineNum, line_checked, str(state), f"{e}\n{usage}")
+        except UnknownRule as e:
+            raise ProofScriptFailure(lineNum, line_checked, str(state), str(e))
+        except UnexpectedInput as e:
+            errMsg = "Error parsing rule application.\n\n"
+            errMsg += getattr(dict_rules.get(name), 'usage', None)
+            raise ProofScriptFailure(lineNum, line_checked, str(state), errMsg)
+        except ValueError as e:
+            errMsg = str(e)
+            if errMsg:
+                errMsg += '\n\n'
+            errMsg += getattr(dict_rules.get(name), 'usage', None)
+            raise ProofScriptFailure(lineNum, line_checked, str(state), errMsg)
+        except Exception as e:
+            errMsg = "An internal error occurred.\n\n" + str(e)
+            raise ProofScriptFailure(lineNum, line_checked, str(state), errMsg)
     return str(state)
