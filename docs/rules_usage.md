@@ -433,7 +433,7 @@ Theorem ¬+:
 Usage: ¬+ <index1> <index2> <formula>
     <index1> — 1-based index of an existing hypothesis: Σ, A ⊢ B
     <index2> — 1-based index of an existing hypothesis: Σ, A ⊢ ¬B
-    <formula> — a formula: A
+    [formula] — a formula: A (optional; if not provided, DeDuck will infer A as the only formula in the set Σ ∪ {A})
 Effect: Adds Σ ⊢ ¬A as a new hypothesis.
 ```
 
