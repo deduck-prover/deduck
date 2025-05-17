@@ -31,8 +31,6 @@ def generate_markdown(rules):
         else:
             others.append((name, usage))
     md = []
-    md.append('<div align="center"><img src="../assets/deduck.png" alt="DeDuck Logo" width="120" /></div>')
-    md.append('')
     md.append('# Rule Usage')
     md.append('')
     md.append('## Index')
