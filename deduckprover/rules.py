@@ -644,28 +644,39 @@ def r_in(state, *params):
 Usage: ¬+ <index1> <index2> <formula>
     <index1> — 1-based index of an existing hypothesis: Σ, A ⊢ B
     <index2> — 1-based index of an existing hypothesis: Σ, A ⊢ ¬B
-    <formula> — a formula: A
+    [formula] — a formula: A (optional; if not provided, DeDuck will infer A as the only formula in the set Σ ∪ {A})
 Effect: Adds Σ ⊢ ¬A as a new hypothesis.
 """)
 def r_not_intro(state, *params):
-    if len(params) != 3:
+    if len(params) not in (2, 3):
         raise ValueError()
     index1 = state.process_index_param(params[0])
     index2 = state.process_index_param(params[1])
     s1 = state.hyp(index1)
     s2 = state.hyp(index2)
-    # Get A and B
-    A = Parser(params[2]).parse_formula_only()
+    if len(params) == 3:
+        # Explicit formula A provided
+        A = Parser(params[2]).parse_formula_only()
+        # Check that both hypotheses have the same premises
+        if s1.premises != s2.premises:
+            raise ValueError("Hypotheses must share the same premises.")
+        # Check A is in the premises of both hypotheses
+        if A not in s1.premises or A not in s2.premises:
+            raise ValueError(f"Formula {A} not in premises of both hypotheses")
+    else:
+        # Infer A: if both premises are singleton sets, use their only element (must be equal)
+        if len(s1.premises) == 1 and len(s2.premises) == 1:
+            [A1] = s1.premises
+            [A2] = s2.premises
+            if A1 != A2:
+                raise ValueError("Singleton premises do not match; cannot infer A.")
+            A = A1
+        else:
+            raise ValueError("Cannot infer formula: both premises must be singleton sets if formula is omitted.")
     B = s1.conclusion
     # Check that the second hypothesis concludes ¬B
     if s2.conclusion != Not(B):
-        raise ValueError(f"Conclusions of both hypotheses must match.")
-    # Check that both hypotheses have the same premises
-    if s1.premises != s2.premises:
-        raise ValueError("Hypotheses must share the same premises.")
-    # Check A is in the premises of both hypotheses
-    if A not in s1.premises:
-        raise ValueError(f"Formula {A} not in premises of hypothesis")
+        raise ValueError("Second hypothesis must conclude ¬B, where B is the conclusion of the first hypothesis.")
     new_hyp = Sequent(list(s1.premises - {A}), Not(A))
     state.add_hyp(new_hyp)
 
