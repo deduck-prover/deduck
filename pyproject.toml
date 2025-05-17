@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "deduck-prover"
-version = "0.1.0"
+version = "0.2.0"
 description = "A little prover for CS 245 at the University of Waterloo"
 readme = "README.md"
 requires-python = ">=3.7"
@@ -30,12 +30,14 @@ dependencies = [
 [tool.hatch.build]
 include = [
     "deduckprover/*.py",  # Only include Python files from deduckprover
+    "docs/*.md",
+    "docs/*.py",
+    "assets/**",
     "LICENSE",
     "README.md",
 ]
 exclude = [
     "**/dev/**",  # Exclude dev directory
-    "**/docs/**",  # Exclude docs directory
     "**/__pycache__/**",  # Exclude all __pycache__ directories
     "**/.git/**",  # Exclude git directory
     "**/.vscode/**",  # Exclude vscode directory
