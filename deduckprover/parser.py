@@ -25,8 +25,8 @@ or_expr: and_expr (OR and_expr)*               -> chain_or
 and_expr: not_expr (AND not_expr)*             -> chain_and
 ?not_expr: NOT not_expr                        -> not_
   | quantifier
-?quantifier: ("∀" | "forall") NAME formula     -> forall
-  | ("∃" | "exists") NAME formula              -> exists
+?quantifier: ("∀" | "forall") NAME quantifier  -> forall
+  | ("∃" | "exists") NAME quantifier           -> exists
   | atom
 ?atom: NAME "(" term_list ")"                  -> atom_with_args
   | NAME                                       -> atom_no_args
