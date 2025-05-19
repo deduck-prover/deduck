@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "deduck-prover"
-version = "0.2.0"
+version = "0.2.1"
 description = "A little prover for CS 245 at the University of Waterloo"
 readme = "README.md"
 requires-python = ">=3.7"
@@ -26,6 +26,9 @@ classifiers = [
 dependencies = [
     "lark>=0.12.0",
 ]
+
+[project.urls]
+"Repository" = "https://github.com/deduck-prover/deduck.git"
 
 [tool.hatch.build]
 include = [

@@ -15,7 +15,7 @@ pip install deduck-prover
 ```
 
 ## Documentation
-A reference manual of the available axioms and theorems is [available](docs/rules_usage.md).
+A reference manual of the available axioms and theorems can be found [here](docs/rules_usage.md).
 
 ## License
 
