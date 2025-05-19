@@ -131,7 +131,7 @@ def r_implies_elim(state, *params):
     If Σ, A ⊢ B, then Σ ⊢ A → B
 Usage: →+ <index> [formula]
     <index> — 1-based index of an existing hypothesis: Σ, A ⊢ B
-    [formula] — a formula: A (optional; if not provided, DeDuck will infer A as the only formula in the selected hypothesis)
+    [formula] — a formula: A (optional; if not provided, DeDuck will infer A as the only formula in the set Σ ∪ {A})
 Effect: Adds Σ ⊢ A → B as a new hypothesis.
 """)
 def r_implies_intro(state, *params):
@@ -271,38 +271,15 @@ def r_or_intro(state, *params):
     state.add_hyp(new_hyp1)
     state.add_hyp(new_hyp2)
 
-@rule(['iff-l', '↔-l'], usage="""Axiom ↔-l:
+@rule(['iff-', '↔-'], usage="""Axiom ↔-:
     If Σ ⊢ A ↔ B and Σ ⊢ A, then Σ ⊢ B.
-Usage: ↔-l <index1> <index2>
-    <index1> — 1-based index of an existing hypothesis: Σ ⊢ A ↔ B
-    <index2> — 1-based index of an existing hypothesis: Σ ⊢ A
-Effect: Adds Σ ⊢ B as a new hypothesis.
-""")
-def r_iff_elim_l(state, *params):
-    if len(params) != 2:
-        raise ValueError()
-    index1 = state.process_index_param(params[0])
-    index2 = state.process_index_param(params[1])
-    s1 = state.hyp(index1)
-    s2 = state.hyp(index2)
-    if s1.premises != s2.premises:
-        raise ValueError("Hypotheses must share the same premises.")
-    if not isinstance(s1.conclusion, Iff):
-        raise ValueError("First hypothesis must conclude a biconditional.")
-    if s1.conclusion.left != s2.conclusion:
-        raise ValueError("Second hypothesis must conclude A, the left side of the biconditional.")
-    # Add Σ ⊢ B as hypothesis
-    new_hyp = Sequent(list(s1.premises), s1.conclusion.right)
-    state.add_hyp(new_hyp)
-
-@rule(['iff-r', '↔-r'], usage="""Axiom ↔-r:
     If Σ ⊢ A ↔ B and Σ ⊢ B, then Σ ⊢ A.
-Usage: ↔-r <index1> <index2>
+Usage: ↔- <index1> <index2>
     <index1> — 1-based index of an existing hypothesis: Σ ⊢ A ↔ B
-    <index2> — 1-based index of an existing hypothesis: Σ ⊢ B
-Effect: Adds Σ ⊢ A as a new hypothesis.
+    <index2> — 1-based index of an existing hypothesis: Σ ⊢ A or Σ ⊢ B
+Effect: Adds Σ ⊢ B (if Σ ⊢ A is given) or Σ ⊢ A (if Σ ⊢ B is given) as a new hypothesis.
 """)
-def r_iff_elim_r(state, *params):
+def r_iff_elim(state, *params):
     if len(params) != 2:
         raise ValueError()
     index1 = state.process_index_param(params[0])
@@ -313,11 +290,15 @@ def r_iff_elim_r(state, *params):
         raise ValueError("Hypotheses must share the same premises.")
     if not isinstance(s1.conclusion, Iff):
         raise ValueError("First hypothesis must conclude a biconditional.")
-    if s1.conclusion.right != s2.conclusion:
-        raise ValueError("Second hypothesis must conclude B, the right side of the biconditional.")
-    # Add Σ ⊢ A as hypothesis
-    new_sequent = Sequent(list(s1.premises), s1.conclusion.left)
-    state.add_hyp(new_sequent)
+    if s1.conclusion.left == s2.conclusion:
+        # Σ ⊢ A ↔ B and Σ ⊢ A, add Σ ⊢ B
+        new_hyp = Sequent(list(s1.premises), s1.conclusion.right)
+    elif s1.conclusion.right == s2.conclusion:
+        # Σ ⊢ A ↔ B and Σ ⊢ B, add Σ ⊢ A
+        new_hyp = Sequent(list(s1.premises), s1.conclusion.left)
+    else:
+        raise ValueError("Second hypothesis must conclude either side of the biconditional in the first hypothesis.")
+    state.add_hyp(new_hyp)
 
 @rule(['iff+', '↔+'], usage="""Axiom ↔+:
     If Σ, A ⊢ B and Σ, B ⊢ A, then Σ ⊢ A ↔ B.
@@ -406,29 +387,35 @@ def r_forall_intro(state, *params):
 
 @rule(['exists-', '∃-'], usage="""Axiom ∃-:
     If Σ, A(`u) ⊢ B and u does not occur in Σ or B, then Σ, ∃x A(x) ⊢ B.
-Usage: ∃- <index> <formula> <free variable> <bound variable>
+Usage: ∃- <index> <free variable> <bound variable> [formula]
     <index> — 1-based index of an existing hypothesis: Σ, A(`u) ⊢ B
-    <formula> — a formula: A(`u)
     <free variable> — the name of a free variable: `u
     <bound variable> — the name of a bound variable: x
+    [formula] — a formula: A(`u) (optional; if not provided, DeDuck will infer A(`u) as the only formula in the set Σ ∪ {A(`u)} that contains the free variable `u)
 Effect: Adds Σ, ∃x A(x) ⊢ B as a new hypothesis.
 """)
 def r_exists_elim(state, *params):
-    if len(params) != 4:
+    if len(params) not in (3, 4):
         raise ValueError()
     index = state.process_index_param(params[0])
-    formula = Parser(params[1]).parse_formula_only() # A(`u)
-    fv_name = params[2].strip(' `') # `u
-    v_name = params[3].strip() # x
+    fv_name = params[1].strip(' `') # `u
+    v_name = params[2].strip() # x
     s = state.hyp(index)
     # Check fv_name and v_name are identifiers
     if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', fv_name) is None:
         raise ValueError(f"Invalid free variable name: {fv_name}")
     if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', v_name) is None:
         raise ValueError(f"Invalid bound variable name: {v_name}")
-    # Check the chosen hypothesis' premises contain the formula
-    if formula not in s.premises:
-        raise ValueError(f"Cannot find {formula} in premises of hypothesis {s}")
+    if len(params) == 4:
+        formula = Parser(params[3]).parse_formula_only()
+        if formula not in s.premises:
+            raise ValueError(f"Cannot find {formula} in premises of hypothesis {s}")
+    else:
+        # Try to infer A(`u): the only formula in the premises containing the free variable
+        candidates = [p for p in s.premises if is_free_in(p, fv_name)]
+        if len(candidates) != 1:
+            raise ValueError(f"Cannot infer formula: there must be exactly one formula in the premises containing the free variable {fv_name}.")
+        formula = candidates[0]
     # Gather Σ = other premises
     Sigma = s.premises - {formula}
     # Check u doesn't occur free in Σ or in the conclusion B
@@ -711,6 +698,51 @@ def r_flipflop(state, *params):
     A = s.premises[0]
     B = s.conclusion
     new_sequent = Sequent([Not(B)], Not(A))
+    state.add_hyp(new_sequent)
+
+@rule(['MPT', 'disjunctive-syllogism', 'Disjunctive-Syllogism'], usage="""Theorem Disjunctive Syllogism:
+    A ∨ B, ¬A ⊢ B
+Usage: MPT <formula1> <formula2>
+    <formula1> — a formula: A
+    <formula2> — a formula: B
+Effect: Adds A ∨ B, ¬A ⊢ B as a new hypothesis.
+""")
+def r_disjuctive_syllogism(state, *params):
+    if len(params) != 2:
+        raise ValueError()
+    formula1 = Parser(params[0]).parse_formula_only()  # A
+    formula2 = Parser(params[1]).parse_formula_only()  # B
+    disj = Or(formula1, formula2)
+    not_a = Not(formula1)
+    new_sequent = Sequent([disj, not_a], formula2)
+    state.add_hyp(new_sequent)
+
+@rule(['transtivity', 'Transitivity'], usage="""Theorem Transitivity:
+    If Σ ⊢ A1, Σ ⊢ A2, ..., Σ ⊢ An, and A1, A2, ..., An ⊢ B, then Σ ⊢ B
+Usage: Transitivity <index-1> <index-2> ... <index-N> <index-(N+1)>
+    <index-i> (i = 1, ..., N) — 1-based index of an existing hypothesis: Σ ⊢ Ai
+    <index-(N+1)> — 1-based index of an existing hypothesis: A1, A2, ..., An ⊢ B
+Effect: Adds Σ ⊢ B as a new hypothesis.
+""")
+def r_trans(state, *params):
+    if len(params) < 2:
+        raise ValueError()
+    indices = [state.process_index_param(param) for param in params[:-1]]
+    last_index = state.process_index_param(params[-1])
+    # Get all the hypotheses Σ ⊢ Ai
+    hyps = [state.hyp(i) for i in indices]
+    last_hyp = state.hyp(last_index)
+    # All must have the same premises
+    Sigma = hyps[0].premises
+    for h in hyps[1:]:
+        if h.premises != Sigma:
+            raise ValueError("All Σ ⊢ Ai hypotheses must share the same premises Σ.")
+    # last_hyp must have as premises exactly the conclusions of the Ai's, in any order
+    ai_concs = frozenset(h.conclusion for h in hyps)
+    if last_hyp.premises != ai_concs:
+        raise ValueError("The last hypothesis must have as premises exactly the conclusions of the previous hypotheses.")
+    # Add Σ ⊢ B as a new hypothesis
+    new_sequent = Sequent(list(Sigma), last_hyp.conclusion)
     state.add_hyp(new_sequent)
 
 @rule(['=refl', '≈refl'], usage="""Theorem ≈refl:
