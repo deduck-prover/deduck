@@ -11,8 +11,7 @@
 - [and+/∧+](#andplus∧plus)
 - [or-/∨-](#orminus∨minus)
 - [or+/∨+](#orplus∨plus)
-- [iff-l/↔-l](#iffminusl↔minusl)
-- [iff-r/↔-r](#iffminusr↔minusr)
+- [iff-/↔-](#iffminus↔minus)
 - [iff+/↔+](#iffplus↔plus)
 - [forall-/∀-](#forallminus∀minus)
 - [forall+/∀+](#forallplus∀plus)
@@ -35,6 +34,8 @@
 - [not+/¬+](#notplus¬plus)
 - [inconsistency/Inconsistency](#inconsistencyinconsistency)
 - [flip-flop/Flip-Flop/flipflop/FlipFlop](#flipminusflopflipminusflopflipflopflipflop)
+- [MPT/disjunctive-syllogism/Disjunctive-Syllogism](#mptdisjunctiveminussyllogismdisjunctiveminussyllogism)
+- [transtivity/Transitivity](#transtivitytransitivity)
 - [=refl/≈refl](#=refl≈refl)
 - [=symm/≈symm](#=symm≈symm)
 - [=trans/≈trans](#=trans≈trans)
@@ -132,7 +133,7 @@ Axiom →+:
     If Σ, A ⊢ B, then Σ ⊢ A → B
 Usage: →+ <index> [formula]
     <index> — 1-based index of an existing hypothesis: Σ, A ⊢ B
-    [formula] — a formula: A (optional; if not provided, DeDuck will infer A as the only formula in the selected hypothesis)
+    [formula] — a formula: A (optional; if not provided, DeDuck will infer A as the only formula in the set Σ ∪ {A})
 Effect: Adds Σ ⊢ A → B as a new hypothesis.
 ```
 
@@ -193,31 +194,18 @@ Effect: Adds Σ ⊢ A ∨ B and Σ ⊢ B ∨ A as new hypotheses.
 ```
 
 
-<a name="iffminusl↔minusl"></a>
+<a name="iffminus↔minus"></a>
 
-## iff-l/↔-l
+## iff-/↔-
 
 ```
-Axiom ↔-l:
+Axiom ↔-:
     If Σ ⊢ A ↔ B and Σ ⊢ A, then Σ ⊢ B.
-Usage: ↔-l <index1> <index2>
-    <index1> — 1-based index of an existing hypothesis: Σ ⊢ A ↔ B
-    <index2> — 1-based index of an existing hypothesis: Σ ⊢ A
-Effect: Adds Σ ⊢ B as a new hypothesis.
-```
-
-
-<a name="iffminusr↔minusr"></a>
-
-## iff-r/↔-r
-
-```
-Axiom ↔-r:
     If Σ ⊢ A ↔ B and Σ ⊢ B, then Σ ⊢ A.
-Usage: ↔-r <index1> <index2>
+Usage: ↔- <index1> <index2>
     <index1> — 1-based index of an existing hypothesis: Σ ⊢ A ↔ B
-    <index2> — 1-based index of an existing hypothesis: Σ ⊢ B
-Effect: Adds Σ ⊢ A as a new hypothesis.
+    <index2> — 1-based index of an existing hypothesis: Σ ⊢ A or Σ ⊢ B
+Effect: Adds Σ ⊢ B (if Σ ⊢ A is given) or Σ ⊢ A (if Σ ⊢ B is given) as a new hypothesis.
 ```
 
 
@@ -271,11 +259,11 @@ Effect: Adds Σ ⊢ ∀x A(x) as a new hypothesis.
 ```
 Axiom ∃-:
     If Σ, A(`u) ⊢ B and u does not occur in Σ or B, then Σ, ∃x A(x) ⊢ B.
-Usage: ∃- <index> <formula> <free variable> <bound variable>
+Usage: ∃- <index> <free variable> <bound variable> [formula]
     <index> — 1-based index of an existing hypothesis: Σ, A(`u) ⊢ B
-    <formula> — a formula: A(`u)
     <free variable> — the name of a free variable: `u
     <bound variable> — the name of a bound variable: x
+    [formula] — a formula: A(`u) (optional; if not provided, DeDuck will infer A(`u) as the only formula in the set Σ ∪ {A(`u)} that contains the free variable `u)
 Effect: Adds Σ, ∃x A(x) ⊢ B as a new hypothesis.
 ```
 
@@ -462,6 +450,34 @@ Theorem FlipFlop:
 Usage: FlipFlop <index>
     <index> — 1-based index of an existing hypothesis: A ⊢ B
 Effect: Adds ¬B ⊢ ¬A as a new hypothesis.
+```
+
+
+<a name="mptdisjunctiveminussyllogismdisjunctiveminussyllogism"></a>
+
+## MPT/disjunctive-syllogism/Disjunctive-Syllogism
+
+```
+Theorem Disjunctive Syllogism:
+    A ∨ B, ¬A ⊢ B
+Usage: MPT <formula1> <formula2>
+    <formula1> — a formula: A
+    <formula2> — a formula: B
+Effect: Adds A ∨ B, ¬A ⊢ B as a new hypothesis.
+```
+
+
+<a name="transtivitytransitivity"></a>
+
+## transtivity/Transitivity
+
+```
+Theorem Transitivity:
+    If Σ ⊢ A1, Σ ⊢ A2, ..., Σ ⊢ An, and A1, A2, ..., An ⊢ B, then Σ ⊢ B
+Usage: Transitivity <index-1> <index-2> ... <index-N> <index-(N+1)>
+    <index-i> (i = 1, ..., N) — 1-based index of an existing hypothesis: Σ ⊢ Ai
+    <index-(N+1)> — 1-based index of an existing hypothesis: A1, A2, ..., An ⊢ B
+Effect: Adds Σ ⊢ B as a new hypothesis.
 ```
 
 
