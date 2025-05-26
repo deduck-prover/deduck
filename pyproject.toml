@@ -43,12 +43,13 @@ include = [
     "README.md",
 ]
 exclude = [
-    "**/dev/**",  # Exclude dev directory
-    "**/__pycache__/**",  # Exclude all __pycache__ directories
-    "**/.git/**",  # Exclude git directory
-    "**/.vscode/**",  # Exclude vscode directory
-    "**/.DS_Store",  # Exclude .DS_Store files
-    "**/requirements.txt",  # Exclude requirements.txt
+    "**/dev/**",
+    "**/requirements.txt",
+    "**/__pycache__/**",
+    "**/.git/**",
+    "**/.vscode/**",
+    "**/.DS_Store",
+    "**/.github/**",
 ]
 
 [tool.hatch.build.targets.wheel]
