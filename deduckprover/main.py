@@ -1,24 +1,9 @@
 import sys
 import argparse
 from .script import run_script, ProofScriptFailure
-from .__init__ import __version__
 
 def main():
-    asciiArt =f'''
-      __
-  >(o )___    DeDuck
-   ( ._> /    "No quacks, just facts."
-  ~~~~~~~~~~
-
-  Programming formal-deduction proofs
-  
-  CS 245 Logic and Computation
-  University of Waterloo
-  
-  © Yizhou Zhang
-  Version: {__version__}'''
-
-    parser = argparse.ArgumentParser(description=asciiArt, formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('file', type=str, help='Path to the proof script file')
     args = parser.parse_args()
 
@@ -45,4 +30,4 @@ def main():
         sys.exit(1)
 
 if __name__ == '__main__':
-    main() 
+    main()
