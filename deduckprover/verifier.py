@@ -110,7 +110,7 @@ class ProofState:
             lines.append("Hypotheses:")
             for row in table:
                 lines.append(f"{row[0]} {row[1]} ⊢ {row[2]}")
-            lines.append("Conclusion:")
+            lines.append("Goal:")
             lines.append(f"     {self.goal}")
             return "\n".join(lines)
 
