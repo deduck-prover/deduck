@@ -1,0 +1,38 @@
+# This file provides a simple example proof to help you get started with DeDuck.
+# (A comment line starts with a '#')
+
+# We're proving a classic result: hypothetical syllogism 
+A → B, B → C ⊢ A → C
+
+Ref "A → B"
+# This step invokes the Reflexivity axiom.
+
+# When referencing axioms or theorems, you can use any of their known names (e.g., 'Ref' or 'ref').
+
+# Refer to https://github.com/deduck-prover/deduck/blob/main/docs/rules_usage.md for the complete set of available axioms and theorems.
+
+# When referencing axioms or theorems, parameters can be given in single or double quotes.
+# Quotes are optional if the parameter has no whitespaces.
+# For example: ref "A → B" or ref A→B (both work).
+
++ 1 'B→C, A'
+Ref A
++ 3 "A → B, B -> C"
+
+# DeDuck supports both ASCII and Unicode notation.
+# '~' can be written as '¬'
+# '/\' can be written as '∧'
+# '\/' can be written as '∨'
+# '->' can be written as '→'
+# '<->' can be written as '↔'
+# '|-' can be written as '⊢'
+# 'forall' can be written as '∀'
+# 'exists' can be written as '∃'
+
+Ref B→C
++ 5 "A→B, A"
+→- 2 4
+→- 6 7
+→+ 8 A
+exact
+# The command 'exact' marks the end of a proof.
