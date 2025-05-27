@@ -1,0 +1,8 @@
+# Double-negation elimination
+
+¬¬A ⊢ A
+
+∈ "¬A, ¬¬A" 1
+∈ "¬A, ¬¬A" 2
+¬- 1 2 "A"
+exact

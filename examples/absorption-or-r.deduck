@@ -1,0 +1,6 @@
+A ⊢ (A ∧ B) ∨ A
+
+Ref 'A'
+∨+ 1 'A ∧ B'
+rm 2
+exact

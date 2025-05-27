@@ -1,0 +1,8 @@
+(A /\ B) \/ A |- A
+
+Ref "A"
+Ref "A /\ B"
+and- 2
+rm 4
+or- 3 1
+exact
