@@ -4,15 +4,15 @@
 ### Axioms
 - [Ref/ref](#refref)
 - [+](#plus)
-- [not-/¬-](#notminus¬minus)
-- [imp-/→-](#impminus→minus)
-- [imp+/→+](#impplus→plus)
-- [and-/∧-](#andminus∧minus)
-- [and+/∧+](#andplus∧plus)
-- [or-/∨-](#orminus∨minus)
-- [or+/∨+](#orplus∨plus)
-- [iff-/↔-](#iffminus↔minus)
-- [iff+/↔+](#iffplus↔plus)
+- [not-/neg-/~-/¬-](#notminusnegminus~minus¬minus)
+- [imp-/->-/→-](#impminusminus>minus→minus)
+- [imp+/->+/→+](#impplusminus>plus→plus)
+- [and-/conj-/∧-](#andminusconjminus∧minus)
+- [and+/conj+/∧+](#andplusconjplus∧plus)
+- [or-/disj-/∨-](#orminusdisjminus∨minus)
+- [or+/disj+/∨+](#orplusdisjplus∨plus)
+- [iff-/<->-/↔-](#iffminus<minus>minus↔minus)
+- [iff+/<->+/↔+](#iffplus<minus>plus↔plus)
 - [forall-/∀-](#forallminus∀minus)
 - [forall+/∀+](#forallplus∀plus)
 - [exists-/∃-](#existsminus∃minus)
@@ -31,7 +31,7 @@
 
 ### Proven Theorems
 - [in/In/∈](#inin∈)
-- [not+/¬+](#notplus¬plus)
+- [not+/neg+/~+/¬+](#notplusnegplus~plus¬plus)
 - [inconsistency/Inconsistency](#inconsistencyinconsistency)
 - [flip-flop/Flip-Flop/flipflop/FlipFlop](#flipminusflopflipminusflopflipflopflipflop)
 - [MPT/disjunctive-syllogism/Disjunctive-Syllogism](#mptdisjunctiveminussyllogismdisjunctiveminussyllogism)
@@ -64,7 +64,7 @@ Effect: Discharges the goal if its conclusion exactly matches the selected hypot
 ```
 Usage: rm <index>
     <index> — 1-based index of an existing hypothesis
-Effect: Removes the selected hypothesis from the current goal.
+Effect: Removes the selected hypothesis from the current proof state.
 ```
 
 
@@ -95,9 +95,9 @@ Effect: Adds Σ, Σ' ⊢ A as a new hypothesis.
 ```
 
 
-<a name="notminus¬minus"></a>
+<a name="notminusnegminus~minus¬minus"></a>
 
-## not-/¬-
+## not-/neg-/~-/¬-
 
 ```
 Axiom ¬-:
@@ -110,9 +110,9 @@ Effect: Adds Σ ⊢ A as a new hypothesis.
 ```
 
 
-<a name="impminus→minus"></a>
+<a name="impminusminus>minus→minus"></a>
 
-## imp-/→-
+## imp-/->-/→-
 
 ```
 Axiom →-:
@@ -124,9 +124,9 @@ Effect: Adds Σ ⊢ B as a new hypothesis.
 ```
 
 
-<a name="impplus→plus"></a>
+<a name="impplusminus>plus→plus"></a>
 
-## imp+/→+
+## imp+/->+/→+
 
 ```
 Axiom →+:
@@ -138,9 +138,9 @@ Effect: Adds Σ ⊢ A → B as a new hypothesis.
 ```
 
 
-<a name="andminus∧minus"></a>
+<a name="andminusconjminus∧minus"></a>
 
-## and-/∧-
+## and-/conj-/∧-
 
 ```
 Axiom ∧-:
@@ -151,9 +151,9 @@ Effect: Adds Σ ⊢ A and Σ ⊢ B as new hypotheses.
 ```
 
 
-<a name="andplus∧plus"></a>
+<a name="andplusconjplus∧plus"></a>
 
-## and+/∧+
+## and+/conj+/∧+
 
 ```
 Axiom ∧+:
@@ -165,9 +165,9 @@ Effect: Adds Σ ⊢ A ∧ B as a new hypothesis.
 ```
 
 
-<a name="orminus∨minus"></a>
+<a name="orminusdisjminus∨minus"></a>
 
-## or-/∨-
+## or-/disj-/∨-
 
 ```
 Axiom ∨-:
@@ -180,9 +180,9 @@ Effect: Adds Σ, A ∨ B ⊢ C as a new hypothesis.
 ```
 
 
-<a name="orplus∨plus"></a>
+<a name="orplusdisjplus∨plus"></a>
 
-## or+/∨+
+## or+/disj+/∨+
 
 ```
 Axiom ∨+:
@@ -194,9 +194,9 @@ Effect: Adds Σ ⊢ A ∨ B and Σ ⊢ B ∨ A as new hypotheses.
 ```
 
 
-<a name="iffminus↔minus"></a>
+<a name="iffminus<minus>minus↔minus"></a>
 
-## iff-/↔-
+## iff-/<->-/↔-
 
 ```
 Axiom ↔-:
@@ -209,9 +209,9 @@ Effect: Adds Σ ⊢ B (if Σ ⊢ A is given) or Σ ⊢ A (if Σ ⊢ B is given) 
 ```
 
 
-<a name="iffplus↔plus"></a>
+<a name="iffplus<minus>plus↔plus"></a>
 
-## iff+/↔+
+## iff+/<->+/↔+
 
 ```
 Axiom ↔+:
@@ -411,9 +411,9 @@ Effect: Adds Σ ⊢ A as a new hypothesis.
 ```
 
 
-<a name="notplus¬plus"></a>
+<a name="notplusnegplus~plus¬plus"></a>
 
-## not+/¬+
+## not+/neg+/~+/¬+
 
 ```
 Theorem ¬+:

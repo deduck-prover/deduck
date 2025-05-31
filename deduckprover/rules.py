@@ -23,10 +23,9 @@ def r_exact(state, *params):
 
 @rule('rm', usage="""Usage: rm <index>
     <index> — 1-based index of an existing hypothesis
-Effect: Removes the selected hypothesis from the current goal.
+Effect: Removes the selected hypothesis from the current proof state.
 """)
 def r_remove(state, *params):
-    """Remove a hypothesis from the current goal."""
     if len(params) != 1:
         raise ValueError()
     index = state.process_index_param(params[0])
@@ -61,7 +60,7 @@ def r_add(state, *params):
     new_hyp = Sequent(list(selected.premises) + formulas, selected.conclusion)
     state.add_hyp(new_hyp)
 
-@rule(['not-', '¬-'], usage="""Axiom ¬-:
+@rule(['not-', 'neg-', '~-', '¬-'], usage="""Axiom ¬-:
     If Σ, ¬A ⊢ B and Σ, ¬A ⊢ ¬B, then Σ ⊢ A
 Usage: ¬- <index1> <index2> [formula]
     <index1> — 1-based index of an existing hypothesis: Σ, ¬A ⊢ B
@@ -103,7 +102,7 @@ def r_not_elim(state, *params):
     new_hyp = Sequent(list(s1.premises - {not_formula}), formula)
     state.add_hyp(new_hyp)
 
-@rule(['imp-', '→-'], usage="""Axiom →-:
+@rule(['imp-', '->-', '→-'], usage="""Axiom →-:
     If Σ ⊢ A → B and Σ ⊢ A, then Σ ⊢ B
 Usage: →- <index1> <index2>
     <index1> — 1-based index of an existing hypothesis: Σ ⊢ A → B
@@ -127,7 +126,7 @@ def r_implies_elim(state, *params):
     new_hyp = Sequent(list(s1.premises), s1.conclusion.right)
     state.add_hyp(new_hyp)
 
-@rule(['imp+', '→+'], usage="""Axiom →+:
+@rule(['imp+', '->+', '→+'], usage="""Axiom →+:
     If Σ, A ⊢ B, then Σ ⊢ A → B
 Usage: →+ <index> [formula]
     <index> — 1-based index of an existing hypothesis: Σ, A ⊢ B
@@ -153,7 +152,7 @@ def r_implies_intro(state, *params):
     new_hyp = Sequent(list(new_premises), new_conclusion)
     state.add_hyp(new_hyp)
 
-@rule(['and-', '∧-'], usage="""Axiom ∧-:
+@rule(['and-', 'conj-', '∧-'], usage="""Axiom ∧-:
     If Σ ⊢ A ∧ B, then Σ ⊢ A and Σ ⊢ B
 Usage: ∧- <index>
     <index> — 1-based index of an existing hypothesis: Σ ⊢ A ∧ B
@@ -176,7 +175,7 @@ def r_and_elim(state, *params):
     state.add_hyp(new_left)
     state.add_hyp(new_right)
 
-@rule(['and+', '∧+'], usage="""Axiom ∧+:
+@rule(['and+', 'conj+', '∧+'], usage="""Axiom ∧+:
     If Σ ⊢ A and Σ ⊢ B, then Σ ⊢ A ∧ B
 Usage: ∧+ <index1> <index2>
     <index1> — 1-based index of an existing hypothesis: Σ ⊢ A
@@ -195,7 +194,7 @@ def r_and_intro(state, *params):
     new_hyp = Sequent(list(s1.premises), And(s1.conclusion, s2.conclusion))
     state.add_hyp(new_hyp)
 
-@rule(['or-', '∨-'], usage="""Axiom ∨-:
+@rule(['or-', 'disj-', '∨-'], usage="""Axiom ∨-:
     If Σ, A ⊢ C and Σ, B ⊢ C, then Σ, A ∨ B ⊢ C
 Usage: ∨- <index1> <index2> [<formulas> <formula1> <formula2>]
     <index1> — 1-based index of an existing hypothesis: Σ, A ⊢ C
@@ -248,7 +247,7 @@ def r_or_elim(state, *params):
     else:
         raise ValueError()
 
-@rule(['or+', '∨+'], usage="""Axiom ∨+:
+@rule(['or+', 'disj+', '∨+'], usage="""Axiom ∨+:
     If Σ ⊢ A, then Σ ⊢ A ∨ B and Σ ⊢ B ∨ A.
 Usage: ∨+ <index> <formula>
     <index> — 1-based index of an existing hypothesis: Σ ⊢ A
@@ -271,7 +270,7 @@ def r_or_intro(state, *params):
     state.add_hyp(new_hyp1)
     state.add_hyp(new_hyp2)
 
-@rule(['iff-', '↔-'], usage="""Axiom ↔-:
+@rule(['iff-', '<->-', '↔-'], usage="""Axiom ↔-:
     If Σ ⊢ A ↔ B and Σ ⊢ A, then Σ ⊢ B.
     If Σ ⊢ A ↔ B and Σ ⊢ B, then Σ ⊢ A.
 Usage: ↔- <index1> <index2>
@@ -300,7 +299,7 @@ def r_iff_elim(state, *params):
         raise ValueError("Second hypothesis must conclude either side of the biconditional in the first hypothesis.")
     state.add_hyp(new_hyp)
 
-@rule(['iff+', '↔+'], usage="""Axiom ↔+:
+@rule(['iff+', '<->+', '↔+'], usage="""Axiom ↔+:
     If Σ, A ⊢ B and Σ, B ⊢ A, then Σ ⊢ A ↔ B.
 Usage: ↔+ <index1> <index2>
     <index1> — 1-based index of an existing hypothesis: Σ, A ⊢ B
@@ -626,7 +625,7 @@ def r_in(state, *params):
     # Add the new sequent as a hypothesis
     state.add_hyp(new_sequent)
 
-@rule(['not+', '¬+'], usage="""Theorem ¬+:
+@rule(['not+', 'neg+', '~+', '¬+'], usage="""Theorem ¬+:
     If Σ, A ⊢ B and Σ, A ⊢ ¬B, then Σ ⊢ ¬A.
 Usage: ¬+ <index1> <index2> <formula>
     <index1> — 1-based index of an existing hypothesis: Σ, A ⊢ B
