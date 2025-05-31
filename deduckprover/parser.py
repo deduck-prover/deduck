@@ -207,3 +207,19 @@ class Parser:
     def parse_term_only(self):
         tree = lark_parser_term.parse(self.text, start='term')
         return ASTBuilder().transform(tree)
+
+def parse_sequent(text):
+    """Parse a sequent from text."""
+    return Parser(text).parse_sequent()
+
+def parse_formula(text):
+    """Parse a formula from text."""
+    return Parser(text).parse_formula_only()
+
+def parse_formulas(text):
+    """Parse a list of formulas from text."""
+    return Parser(text).parse_formulas_only()
+
+def parse_term(text):
+    """Parse a term from text."""
+    return Parser(text).parse_term_only()
