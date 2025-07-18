@@ -562,26 +562,26 @@ def r_PA4(state, *params):
     state.add_hyp(new_sequent)
 
 @rule('PA5', usage="""Peano Axiom PA5:
-    ⊢ ∀x(x ⋅ 0 ≈ 0)
+    ⊢ ∀x(x · 0 ≈ 0)
 Usage: PA5
-Effect: Adds ⊢ ∀x(x ⋅ 0 ≈ 0) as a new hypothesis.
+Effect: Adds ⊢ ∀x(x · 0 ≈ 0) as a new hypothesis.
 """)
 def r_PA5(state, *params):
     if len(params) != 0:
         raise ValueError()
-    formula = ForAll('x', Atom("≈", [Func('⋅', [Var('x'), Const('0')]), Const('0')]))
+    formula = ForAll('x', Atom("≈", [Func('·', [Var('x'), Const('0')]), Const('0')]))
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
 
 @rule('PA6', usage="""Peano Axiom PA6:
-    ⊢ ∀x∀y(x ⋅ s(y) ≈ x ⋅ y + x)
+    ⊢ ∀x∀y(x · s(y) ≈ x · y + x)
 Usage: PA6
-Effect: Adds ⊢ ∀x∀y(x ⋅ s(y) ≈ x ⋅ y + x) as a new hypothesis.
+Effect: Adds ⊢ ∀x∀y(x · s(y) ≈ x · y + x) as a new hypothesis.
 """)
 def r_PA6(state, *params):
     if len(params) != 0:
         raise ValueError()
-    formula = ForAll('x', ForAll('y', Atom("≈", [Func('⋅', [Var('x'), Func('s', [Var('y')])]), Func('+', [Func('⋅', [Var('x'), Var('y')]), Var('x')])])))
+    formula = ForAll('x', ForAll('y', Atom("≈", [Func('·', [Var('x'), Func('s', [Var('y')])]), Func('+', [Func('·', [Var('x'), Var('y')]), Var('x')])])))
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
 
@@ -744,13 +744,28 @@ def r_trans(state, *params):
     new_sequent = Sequent(list(Sigma), last_hyp.conclusion)
     state.add_hyp(new_sequent)
 
-@rule(['=refl', '≈refl'], usage="""Theorem ≈refl:
-    ⊢ t ≈ t
-Usage: ≈refl <term>
-    <term> — a term: t
-Effect: Adds ⊢ t ≈ t as a new hypothesis (reflexivity of equality).
+@rule(['=Refl-A', '≈Refl-A', '=refl-A', '≈refl-A'], usage="""Theorem ≈Refl (Version A):
+    ⊢ ∀x (x ≈ x)
+Usage: ≈Refl-A
+Effect: Adds ⊢ ∀x (x ≈ x) as a new hypothesis.
 """)
-def r_eq_refl(state, *params):
+def r_eq_refl_A(state, *params):
+    if len(params) != 0:
+        raise ValueError()
+    # Create the reflexivity formula for equality
+    formula = ForAll('x', Atom("≈", [Var('x'), Var('x')]))
+    # Create a new sequent with the formula as the conclusion
+    new_sequent = Sequent([], formula)
+    # Add the new sequent as a hypothesis
+    state.add_hyp(new_sequent)
+
+@rule(['=Refl-B', '≈Refl-B', '=refl-B', '≈refl-B'], usage="""Theorem ≈Refl (Version B):
+    ⊢ t ≈ t
+Usage: ≈Refl-B <term>
+    <term> — a term: t
+Effect: Adds ⊢ t ≈ t as a new hypothesis.
+""")
+def r_eq_refl_B(state, *params):
     if len(params) != 1:
         raise ValueError()
     term = Parser(params[0]).parse_term_only()
@@ -758,14 +773,26 @@ def r_eq_refl(state, *params):
     new_sequent = Sequent([], formula)
     state.add_hyp(new_sequent)
 
-@rule(['=symm', '≈symm'], usage="""Theorem ≈symm:
+@rule(['=Symm-A', '≈Symm-A', '=symm-A', '≈symm-A'], usage="""Theorem ≈Symm (Version A):
+    ⊢ ∀x ∀y ((x ≈ y) → (y ≈ x))
+Usage: ≈Symm-A
+Effect: Adds ⊢ ∀x ∀y ((x ≈ y) → (y ≈ x)) as a new hypothesis.
+""")
+def r_eq_symm_A(state, *params):
+    if len(params) != 0:
+        raise ValueError()
+    formula = ForAll('x', ForAll('y', Implies(Atom("≈", [Var('x'), Var('y')]), Atom("≈", [Var('y'), Var('x')]))))
+    new_sequent = Sequent([], formula)
+    state.add_hyp(new_sequent)
+
+@rule(['=Symm-B', '≈Symm-B', '=symm-B', '≈symm-B'], usage="""Theorem ≈Symm (Version B):
     t1 ≈ t2 ⊢ t2 ≈ t1
-Usage: ≈symm <term1> <term2>
+Usage: ≈Symm-B <term1> <term2>
     <term1> — a term: t1
     <term2> — a term: t2
-Effect: Adds t1 ≈ t2 ⊢ t2 ≈ t1 as a new hypothesis (symmetry of equality).
+Effect: Adds t1 ≈ t2 ⊢ t2 ≈ t1 as a new hypothesis.
 """)
-def r_eq_symm(state, *params):
+def r_eq_symm_B(state, *params):
     if len(params) != 2:
         raise ValueError()
     term1 = Parser(params[0]).parse_term_only()
@@ -775,15 +802,45 @@ def r_eq_symm(state, *params):
     new_sequent = Sequent([premise], conclusion)
     state.add_hyp(new_sequent)
 
-@rule(['=trans', '≈trans'], usage="""Theorem ≈trans:
+@rule(['=Symm-C', '≈Symm-C', '=symm-C', '≈symm-C'], usage="""Theorem ≈Symm (Version C):
+    If Σ ⊢ t1 ≈ t2, then Σ ⊢ t2 ≈ t1.
+Usage: ≈Symm-C <index>
+    <index> — 1-based index of an existing hypothesis: Σ ⊢ t1 ≈ t2
+Effect: Adds Σ ⊢ t2 ≈ t1 as a new hypothesis.
+""")
+def r_eq_symm_C(state, *params):
+    if len(params) != 1:
+        raise ValueError()
+    index = state.process_index_param(params[0])
+    selected = state.hyp(index)
+    if not isinstance(selected.conclusion, Atom) or selected.conclusion.name != "≈":
+        raise ValueError("Selected hypothesis must conclude an equality.")
+    term1, term2 = selected.conclusion.args
+    conclusion = Atom("≈", [term2, term1])
+    new_sequent = Sequent(list(selected.premises), conclusion)
+    state.add_hyp(new_sequent)
+
+@rule(['=Trans-A', '≈Trans-A', '=trans-A', '≈trans-A'], usage="""Theorem ≈Trans (Version A):
+    ⊢ ∀x ∀y ∀z ((x ≈ y) ∧ (y ≈ z) → (x ≈ z))
+Usage: ≈Trans-A
+Effect: Adds ⊢ ∀x ∀y ∀z ((x ≈ y) ∧ (y ≈ z) → (x ≈ z)) as a new hypothesis.
+""")
+def r_eq_trans_A(state, *params):
+    if len(params) != 0:
+        raise ValueError()
+    formula = ForAll('x', ForAll('y', ForAll('z', Implies(And(Atom("≈", [Var('x'), Var('y')]), Atom("≈", [Var('y'), Var('z')])), Atom("≈", [Var('x'), Var('z')])))))
+    new_sequent = Sequent([], formula)
+    state.add_hyp(new_sequent)
+
+@rule(['=Trans-B', '≈Trans-B', '=trans-B', '≈trans-B'], usage="""Theorem ≈Trans (Version B):
     t1 ≈ t2, t2 ≈ t3 ⊢ t1 ≈ t3
-Usage: ≈trans <term1> <term2> <term3>
+Usage: ≈Trans-B <term1> <term2> <term3>
     <term1> — a term: t1
     <term2> — a term: t2
     <term3> — a term: t3
-Effect: Adds t1 ≈ t2, t2 ≈ t3 ⊢ t1 ≈ t3 as a new hypothesis (transitivity of equality).
+Effect: Adds t1 ≈ t2, t2 ≈ t3 ⊢ t1 ≈ t3 as a new hypothesis.
 """)
-def r_eq_trans(state, *params):
+def r_eq_trans_B(state, *params):
     if len(params) != 3:
         raise ValueError()
     term1 = Parser(params[0]).parse_term_only()
@@ -793,4 +850,67 @@ def r_eq_trans(state, *params):
     premise2 = Atom("≈", [term2, term3])
     conclusion = Atom("≈", [term1, term3])
     new_sequent = Sequent([premise1, premise2], conclusion)
+    state.add_hyp(new_sequent)
+
+@rule(['=Trans-C', '≈Trans-C', '=trans-C', '≈trans-C'], usage="""Theorem ≈Trans (Version C):
+    If Σ ⊢ t₁ ≈ t₂, Σ ⊢ t₂ ≈ t₃, ..., Σ ⊢ tₙ ≈ tₙ₊₁, then Σ ⊢ t₁ ≈ tₙ₊₁.
+Usage: ≈Trans-C <index-1> <index-2> ... <index-N>
+    <index-i> (i = 1, ..., N) — 1-based index of an existing hypothesis: Σ ⊢ tᵢ ≈ tᵢ₊₁
+Effect: Adds Σ ⊢ t₁ ≈ tₙ₊₁ as a new hypothesis.
+""")
+def r_eq_trans_C(state, *params):
+    if len(params) < 2:
+        raise ValueError()
+    indices = [state.process_index_param(p) for p in params]
+    hyps = [state.hyp(i) for i in indices]
+    Sigma = hyps[0].premises
+    # Check that all the selected hypotheses have the same premises
+    for h in hyps:
+        if h.premises != Sigma:
+            raise ValueError("All hypotheses must share the same premises Σ.")
+    # Check that all the selected hypotheses conclude an equality
+    for h in hyps:
+        if not isinstance(h.conclusion, Atom) or h.conclusion.name != "≈":
+            raise ValueError("Each hypothesis must conclude an equality.")
+    # Check that the equalities form a chain
+    terms = [h.conclusion.args for h in hyps]
+    if not all(terms[i][1] == terms[i + 1][0] for i in range(len(terms) - 1)):
+        raise ValueError("The equalities must form a chain: t₁ ≈ t₂, t₂ ≈ t₃, ..., tₙ ≈ tₙ₊₁.")   
+    # Create the new sequent Σ ⊢ t₁ ≈ tₙ₊₁
+    first_term = terms[0][0]
+    last_term = terms[-1][1]
+    conclusion = Atom("≈", [first_term, last_term])
+    new_sequent = Sequent(list(Sigma), conclusion)
+    # Add the new sequent as a hypothesis
+    state.add_hyp(new_sequent)
+
+@rule(['EQSubs', '≈Subs', '=Subs', '≈subs', '=subs'], usage="""Theorem EQSubs:
+    If Σ ⊢ t₁ ≈ t₂, then Σ ⊢ r(t₁) ≈ r(t₂).
+Usage: EQSubs <index> <term> <free variable>
+    <index> — 1-based index of an existing hypothesis: Σ ⊢ t₁ ≈ t₂
+    <term> — a term: r(`u), such that r(t₁) is the result of substituting t₁ for `u
+    <free variable> — the name of a free variable: `u
+Effect: Adds Σ ⊢ r(t₁) ≈ r(t₂) as a new hypothesis.
+""")
+def r_eq_subs(state, *params):
+    if len(params) != 3:
+        raise ValueError()
+    index = state.process_index_param(params[0])
+    term = Parser(params[1]).parse_term_only() # r(`u)
+    fv_name = params[2].strip(' `') # `u
+    s = state.hyp(index)
+    # Check fv_name is an identifier
+    if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', fv_name) is None:
+        raise ValueError(f"Invalid free variable name: {fv_name}")
+    # Check the selected hypothesis concludes an equality
+    if not isinstance(s.conclusion, Atom) or s.conclusion.name != "≈":
+        raise ValueError(f"Selected hypothesis does not conclude an equality: {s}")
+    t1, t2 = s.conclusion.args
+    # Check that `u occurs free in r
+    if not is_free_in(term, fv_name):
+        raise ValueError(f"Variable {fv_name} does not occur free in the term {term}.")
+    # Construct the new conclusion r(t₁) ≈ r(t₂)
+    new_conclusion = Atom("≈", [subst_fvar(term, {fv_name: t1}), subst_fvar(term, {fv_name: t2})])
+    # Add the new sequent Σ ⊢ r(t₁) ≈ r(t₂)
+    new_sequent = Sequent(list(s.premises), new_conclusion)
     state.add_hyp(new_sequent)
