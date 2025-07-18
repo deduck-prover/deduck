@@ -240,20 +240,24 @@ def pretty(node: AST, paren: bool = True):
     if isinstance(node, FVar):
         return '`' + node.name
     if isinstance(node, Func):
-        args = ', '.join(pretty(arg) for arg in node.args)
-        if node.name == "+":
-            return f"({pretty(node.args[0])} + {pretty(node.args[1])})"
-        elif node.name == "·":
-            return f"({pretty(node.args[0])} · {pretty(node.args[1])})"
+        if node.name == "+" or node.name == "·":
+            def needs_paren(n):
+                return isinstance(n, Func) and n.name in ("+", "·")
+            arg1 = pretty(node.args[0], paren=needs_paren(node.args[0]))
+            arg2 = pretty(node.args[1], paren=needs_paren(node.args[1]))
+            s = f"{arg1} {node.name} {arg2}"
+            return f"({s})" if paren else s
         else:
-            return f"{node.name}({args})"
+            args = ', '.join(pretty(arg, paren=False) for arg in node.args)
+            s = f"{node.name}({args})"
+            return f"({s})" if paren else s
     if isinstance(node, Atom):
         if node.args:
             if node.name == "≈":
-                s = f"{pretty(node.args[0])} ≈ {pretty(node.args[1])}"
+                s = f"{pretty(node.args[0], paren=False)} ≈ {pretty(node.args[1], paren=False)}"
                 return f"({s})" if paren else s
-            else: 
-                args = ', '.join(pretty(arg) for arg in node.args)
+            else:
+                args = ', '.join(pretty(arg, paren=False) for arg in node.args)
                 return f"{node.name}({args})"
         else:
             return node.name
