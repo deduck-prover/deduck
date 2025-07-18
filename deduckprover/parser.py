@@ -36,7 +36,7 @@ term_list: term ("," term)*
 ?term: sum
 ?sum: sum "+" product                          -> plus
   | product
-?product: product "*" factor                   -> times
+?product: product ("*" | "·") factor           -> times
   | factor
 ?factor: FVAR                                  -> fvar
   | "0"                                        -> zero
